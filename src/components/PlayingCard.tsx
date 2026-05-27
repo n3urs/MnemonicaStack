@@ -87,6 +87,22 @@ const PIPS: Record<string, readonly Pip[]> = {
 const VB_W = 100;
 const VB_H = 140;
 
+// Body-pip font-size per rank (in viewBox units). Real decks size body pips
+// generously on low ranks (lots of empty space) and shrink them on 9/10 to
+// avoid overlap. These values were tuned against a Bicycle reference so each
+// rank looks roughly equal-weight to a real card.
+const PIP_SIZE: Record<string, number> = {
+  "2": 38,
+  "3": 36,
+  "4": 34,
+  "5": 32,
+  "6": 30,
+  "7": 28,
+  "8": 28,
+  "9": 24,
+  "10": 22,
+};
+
 function PipBody({ rank, suit }: { rank: string; suit: string }) {
   // Ace gets one large central pip — the traditional "decorated ace" reads
   // as a single big suit mark, far larger than body pips on numbered cards.
@@ -105,6 +121,7 @@ function PipBody({ rank, suit }: { rank: string; suit: string }) {
     );
   }
   const pips = PIPS[rank] ?? [];
+  const fontSize = PIP_SIZE[rank] ?? 22;
   return (
     <svg
       className="pc-pips"
@@ -121,6 +138,7 @@ function PipBody({ rank, suit }: { rank: string; suit: string }) {
             x={cx}
             y={cy}
             className="pc-pip"
+            style={{ fontSize }}
             transform={flipped ? `rotate(180 ${cx} ${cy})` : undefined}
           >
             {suit}
