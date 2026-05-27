@@ -19,3 +19,7 @@ DerivedData/
 # Editor noise
 .vscode/
 .idea/
+
+# Raw face-card SVGs — fetched on demand by scripts/build-face-cards.mjs.
+# Only the optimised .webp output (~470 KB) lives in the repo.
+src/assets/cards/raw/
