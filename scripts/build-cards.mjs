@@ -66,6 +66,22 @@ for (const rank of RANKS) {
       await writeFile(srcFile, svg);
     }
 
+    // The Ace of Spades in letele's deck carries the upstream artist's
+    // watermark — a small QR code carved into the spade plus a "www.me.uk
+    // /cards/" credit underneath. Strip both so the AS looks like a clean
+    // classic ace. (Other cards in the deck are unmarked.)
+    if (name === "AS") {
+      svg = Buffer.from(
+        svg
+          .toString("utf8")
+          // QR-code path: identifiable by its scale(1.704) transform.
+          .replace(/<path\s+transform="[^"]*scale\(1\.704\)[^"]*"[^>]*><\/path>/g, "")
+          // Two text labels under the spade.
+          .replace(/<text[^>]*>www\.me\.uk<\/text>/g, "")
+          .replace(/<text[^>]*>\/cards\/<\/text>/g, ""),
+      );
+    }
+
     const { data, info } = await sharp(svg, { density: 600 })
       .resize({ width: WIDTH })
       .png()
