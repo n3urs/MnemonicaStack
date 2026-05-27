@@ -20,3 +20,8 @@ DerivedData/
 .vscode/
 .idea/
 
+# Cached SVG sources for the card art (~15 MB) — fetched on demand by
+# scripts/build-cards.mjs. Only the optimised .webp output (~1.5 MB) lives
+# in the repo.
+extracted_cards/svg/
+

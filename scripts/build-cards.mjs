@@ -1,64 +1,86 @@
-// One-off script: takes the 52 source PNGs in extracted_cards/ (the user's
-// own card art) and produces optimised, rounded-corner WebPs in
-// src/assets/cards/.
+// One-off script: produces all 52 card WebPs in src/assets/cards/ from
+// Byron Knoll's public-domain SVG deck (mirrored by notpeter on GitHub).
 //
-// Steps:
-//   1. resize to 320px wide (≈2× the largest display size, crisp on Retina)
-//   2. composite with an SVG rounded-rect mask so the card has soft corners
-//      instead of the source's sharp ones
-//   3. encode as WebP q88 — visually lossless for these illustrations and
-//      ~3× smaller than the source PNG
+// Vector source → no washing, no centring drift. Each card is rendered at
+// high density, resized to 480px (≈3.2× the largest display size of 148px),
+// rounded at the corners, and encoded as WebP q90.
+//
+// Source: cards by Byron Knoll, public domain (or WTFPL).
+//   https://github.com/notpeter/Vector-Playing-Cards
 //
 // Run with: node scripts/build-cards.mjs
 
-import { mkdir, readdir, readFile, stat, unlink } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
 
-const SRC = "extracted_cards";
+const SRC = "extracted_cards/svg"; // cached download dir
 const OUT = "src/assets/cards";
-const WIDTH = 320;
-// Real cards have a corner radius of ~5% of their short edge. Same fraction
-// keeps the rounded corners proportional at any display size.
+const WIDTH = 480;
+// Real cards have a corner radius of ~5.5% of their short edge. Same fraction
+// at any output size keeps the rounding visually consistent.
 const RADIUS_PCT = 0.055;
+const BASE = "https://raw.githubusercontent.com/notpeter/Vector-Playing-Cards/master/cards-svg";
 
+const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"];
+const SUITS = ["S", "H", "D", "C"];
+
+// Upstream uses "10" where our codebase uses "T" everywhere else. Translate
+// for downloads, keep "T" for the output filename so the rest of the app
+// doesn't have to change.
+const upstreamName = (rank, suit) => `${rank === "T" ? "10" : rank}${suit}.svg`;
+
+await mkdir(SRC, { recursive: true });
 await mkdir(OUT, { recursive: true });
 
-// Wipe any old generated assets so removed source cards don't linger.
+// Wipe stale outputs so removed/renamed cards don't linger.
 for (const f of (await readdir(OUT)).filter((n) => n.endsWith(".webp"))) {
   await unlink(join(OUT, f));
 }
 
-const files = (await readdir(SRC)).filter((f) => f.endsWith(".png")).sort();
 let totalBytes = 0;
+for (const rank of RANKS) {
+  for (const suit of SUITS) {
+    const name = `${rank}${suit}`;
+    const srcFile = join(SRC, `${name}.svg`);
+    const outFile = join(OUT, `${name}.webp`);
 
-for (const file of files) {
-  const inPath = join(SRC, file);
-  const outPath = join(OUT, file.replace(/\.png$/, ".webp"));
+    let svg;
+    try {
+      svg = await readFile(srcFile);
+    } catch {
+      const url = `${BASE}/${upstreamName(rank, suit)}`;
+      console.log(`fetching ${name} from upstream`);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`download ${name}: ${res.status}`);
+      svg = Buffer.from(await res.arrayBuffer());
+      await writeFile(srcFile, svg);
+    }
 
-  // First pass: resize to the target width to fix the dimensions we'll round
-  // against. We need the post-resize width/height to build a mask that fits.
-  const { data, info } = await sharp(await readFile(inPath))
-    .resize({ width: WIDTH })
-    .png()
-    .toBuffer({ resolveWithObject: true });
-  const { width, height } = info;
-  const radius = Math.round(width * RADIUS_PCT);
+    // First pass: render the SVG at high density and resize to the target
+    // width — we need post-resize dimensions to size the rounded-corner mask.
+    const { data, info } = await sharp(svg, { density: 600 })
+      .resize({ width: WIDTH })
+      .png()
+      .toBuffer({ resolveWithObject: true });
+    const { width, height } = info;
+    const radius = Math.round(width * RADIUS_PCT);
 
-  const mask = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-       <rect x="0" y="0" width="${width}" height="${height}" rx="${radius}" ry="${radius}" fill="black"/>
-     </svg>`,
-  );
+    const mask = Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+         <rect x="0" y="0" width="${width}" height="${height}" rx="${radius}" ry="${radius}" fill="black"/>
+       </svg>`,
+    );
 
-  await sharp(data)
-    .composite([{ input: mask, blend: "dest-in" }])
-    .webp({ quality: 88, effort: 6, alphaQuality: 100 })
-    .toFile(outPath);
+    await sharp(data)
+      .composite([{ input: mask, blend: "dest-in" }])
+      .webp({ quality: 90, effort: 6, alphaQuality: 100 })
+      .toFile(outFile);
 
-  const { size } = await stat(outPath);
-  totalBytes += size;
-  console.log(`${file.padEnd(8)} → ${(size / 1024).toFixed(1).padStart(6)} KB`);
+    const { size } = await stat(outFile);
+    totalBytes += size;
+    console.log(`${name.padEnd(4)} → ${(size / 1024).toFixed(1).padStart(6)} KB`);
+  }
 }
 
-console.log(`\nTOTAL: ${(totalBytes / 1024).toFixed(1)} KB across ${files.length} cards`);
+console.log(`\nTOTAL: ${(totalBytes / 1024).toFixed(1)} KB across 52 cards`);
