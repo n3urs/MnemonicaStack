@@ -8,5 +8,5 @@ import react from "@vitejs/plugin-react";
 // the Pages build, gated by the GITHUB_PAGES env var the workflow sets.
 export default defineConfig({
   plugins: [react()],
-  base: process.env.GITHUB_PAGES ? "/MnumonicaStack/" : "/",
+  base: process.env.GITHUB_PAGES ? "/MnemonicaStack/" : "/",
 });
