@@ -28,57 +28,60 @@ const FACE_IMAGES: Record<string, string> = {
 // half — you can tell a card from either end without spinning it.
 type Pip = readonly [x: number, y: number, flipped: boolean];
 
+// All body pips share a single size (real decks do the same). Higher ranks
+// pack the pips tighter by collapsing the y span; lower ranks spread them
+// out. Side pips sit at x=0.22 / 0.78 to leave room around the indices.
 const PIPS: Record<string, readonly Pip[]> = {
   "2": [
-    [0.5, 0.13, false],
-    [0.5, 0.87, true],
+    [0.5, 0.18, false],
+    [0.5, 0.82, true],
   ],
   "3": [
-    [0.5, 0.13, false],
+    [0.5, 0.18, false],
     [0.5, 0.5, false],
-    [0.5, 0.87, true],
+    [0.5, 0.82, true],
   ],
   "4": [
-    [0.27, 0.16, false], [0.73, 0.16, false],
-    [0.27, 0.84, true], [0.73, 0.84, true],
+    [0.22, 0.18, false], [0.78, 0.18, false],
+    [0.22, 0.82, true], [0.78, 0.82, true],
   ],
   "5": [
-    [0.27, 0.16, false], [0.73, 0.16, false],
+    [0.22, 0.18, false], [0.78, 0.18, false],
     [0.5, 0.5, false],
-    [0.27, 0.84, true], [0.73, 0.84, true],
+    [0.22, 0.82, true], [0.78, 0.82, true],
   ],
   "6": [
-    [0.27, 0.16, false], [0.73, 0.16, false],
-    [0.27, 0.5, false], [0.73, 0.5, false],
-    [0.27, 0.84, true], [0.73, 0.84, true],
+    [0.22, 0.18, false], [0.78, 0.18, false],
+    [0.22, 0.5, false], [0.78, 0.5, false],
+    [0.22, 0.82, true], [0.78, 0.82, true],
   ],
   "7": [
-    [0.27, 0.16, false], [0.73, 0.16, false],
-    [0.5, 0.33, false],
-    [0.27, 0.5, false], [0.73, 0.5, false],
-    [0.27, 0.84, true], [0.73, 0.84, true],
+    [0.22, 0.16, false], [0.78, 0.16, false],
+    [0.5, 0.32, false],
+    [0.22, 0.5, false], [0.78, 0.5, false],
+    [0.22, 0.84, true], [0.78, 0.84, true],
   ],
   "8": [
-    [0.27, 0.16, false], [0.73, 0.16, false],
-    [0.5, 0.33, false],
-    [0.27, 0.5, false], [0.73, 0.5, false],
-    [0.5, 0.67, true],
-    [0.27, 0.84, true], [0.73, 0.84, true],
+    [0.22, 0.14, false], [0.78, 0.14, false],
+    [0.5, 0.32, false],
+    [0.22, 0.5, false], [0.78, 0.5, false],
+    [0.5, 0.68, true],
+    [0.22, 0.86, true], [0.78, 0.86, true],
   ],
   "9": [
-    [0.27, 0.14, false], [0.73, 0.14, false],
-    [0.27, 0.38, false], [0.73, 0.38, false],
+    [0.22, 0.08, false], [0.78, 0.08, false],
+    [0.22, 0.30, false], [0.78, 0.30, false],
     [0.5, 0.5, false],
-    [0.27, 0.62, true], [0.73, 0.62, true],
-    [0.27, 0.86, true], [0.73, 0.86, true],
+    [0.22, 0.70, true], [0.78, 0.70, true],
+    [0.22, 0.92, true], [0.78, 0.92, true],
   ],
   "10": [
-    [0.27, 0.13, false], [0.73, 0.13, false],
-    [0.5, 0.27, false],
-    [0.27, 0.4, false], [0.73, 0.4, false],
-    [0.27, 0.6, true], [0.73, 0.6, true],
-    [0.5, 0.73, true],
-    [0.27, 0.87, true], [0.73, 0.87, true],
+    [0.22, 0.08, false], [0.78, 0.08, false],
+    [0.5, 0.248, false],
+    [0.22, 0.416, false], [0.78, 0.416, false],
+    [0.22, 0.584, true], [0.78, 0.584, true],
+    [0.5, 0.752, true],
+    [0.22, 0.92, true], [0.78, 0.92, true],
   ],
 };
 
@@ -86,22 +89,6 @@ const PIPS: Record<string, readonly Pip[]> = {
 // indices). 100 × 140 ≈ 5:7, matching the card's aspect.
 const VB_W = 100;
 const VB_H = 140;
-
-// Body-pip font-size per rank (in viewBox units). Real decks size body pips
-// generously on low ranks (lots of empty space) and shrink them on 9/10 to
-// avoid overlap. These values were tuned against a Bicycle reference so each
-// rank looks roughly equal-weight to a real card.
-const PIP_SIZE: Record<string, number> = {
-  "2": 38,
-  "3": 36,
-  "4": 34,
-  "5": 32,
-  "6": 30,
-  "7": 28,
-  "8": 28,
-  "9": 24,
-  "10": 22,
-};
 
 function PipBody({ rank, suit }: { rank: string; suit: string }) {
   // Ace gets one large central pip — the traditional "decorated ace" reads
@@ -121,7 +108,6 @@ function PipBody({ rank, suit }: { rank: string; suit: string }) {
     );
   }
   const pips = PIPS[rank] ?? [];
-  const fontSize = PIP_SIZE[rank] ?? 22;
   return (
     <svg
       className="pc-pips"
@@ -138,7 +124,6 @@ function PipBody({ rank, suit }: { rank: string; suit: string }) {
             x={cx}
             y={cy}
             className="pc-pip"
-            style={{ fontSize }}
             transform={flipped ? `rotate(180 ${cx} ${cy})` : undefined}
           >
             {suit}
