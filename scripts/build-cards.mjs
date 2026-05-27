@@ -1,16 +1,16 @@
 // One-off script: produces all 52 card WebPs in src/assets/cards/ from
-// Saul Spatz's public-domain jumbo-index SVG deck.
+// Letele Motebang's CC0 SVG playing-card deck.
 //
-// Why this deck: closest match to a real Bicycle's proportions — daintier
-// pips with proper white space, cream background, inner border frame, big
-// bold corner indices, traditional Bicycle court colours.
+// Why this deck: clean Bicycle-style proportions — daintier pips with proper
+// white space, classic traditional court art (blue/red/yellow), standard
+// (not jumbo) corner indices.
 //
 // Vector source → no washing, no centring drift. Each card is rendered at
 // high density, resized to 480px (≈3.2× the largest display size of 148px),
 // rounded at the corners and encoded as WebP q90.
 //
-// Source: SVGCards by Saul Spatz, public domain.
-//   https://github.com/saulspatz/SVGCards (Vertical2 deck, 2-colour suits)
+// Source: @letele/playing-cards by Letele Motebang, CC0 1.0.
+//   https://github.com/letele/playing-cards
 //
 // Run with: node scripts/build-cards.mjs
 
@@ -21,26 +21,15 @@ import sharp from "sharp";
 const SRC = "extracted_cards/svg"; // cached download dir
 const OUT = "src/assets/cards";
 const WIDTH = 480;
-// Real cards have a corner radius of ~5.5% of their short edge. The saulspatz
-// SVG already has a rounded outer rect at 12 units on a 210×315 viewBox (≈6%),
-// so the WebP corners are mostly already pre-rounded. Mask with a slightly
-// smaller radius to soften the edge that survives resampling.
-const RADIUS_PCT = 0.05;
-const BASE = "https://raw.githubusercontent.com/saulspatz/SVGCards/master/Decks/Vertical2/svgs";
+// Real cards have a corner radius of ~5.5% of their short edge.
+const RADIUS_PCT = 0.055;
+const BASE = "https://raw.githubusercontent.com/letele/playing-cards/master/assets";
 
 // Map our internal codes → upstream filenames.
-//   suit: S/H/D/C → spade/heart/diamond/club
-//   rank: A/T/J/Q/K → Ace/10/Jack/Queen/King; 2–9 stay numeric.
-const SUIT_NAMES = { S: "spade", H: "heart", D: "diamond", C: "club" };
-const RANK_NAMES = {
-  A: "Ace",
-  T: "10",
-  J: "Jack",
-  Q: "Queen",
-  K: "King",
-};
+//   Upstream: {SUIT}-{RANK}.svg, suits S/H/D/C, ranks 2..10/J/Q/K/A.
+//   We use the same suits and "T" for 10, so just translate T → 10.
 const upstreamName = (rank, suit) =>
-  `${SUIT_NAMES[suit]}${RANK_NAMES[rank] ?? rank}.svg`;
+  `${suit}-${rank === "T" ? "10" : rank}.svg`;
 
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"];
 const SUITS = ["S", "H", "D", "C"];
