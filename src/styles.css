@@ -365,115 +365,53 @@ button {
 }
 
 /* ---------- Playing card ---------- */
+/* The card itself is a single bundled image — pre-rounded corners, baked-in
+   indices and pip layout. The container just provides the slot size, aspect
+   ratio, and the drop-shadow that lifts the card off the dark backdrop. */
 .playing-card {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex: none;
   aspect-ratio: 5 / 7;
-  border: 2px solid var(--suit-black);
   border-radius: 9px;
-  background: var(--card-face);
-  color: var(--suit-black);
-  font-family: var(--serif);
-  box-shadow:
-    0 10px 20px rgba(0, 0, 0, 0.55),
-    0 2px 5px rgba(0, 0, 0, 0.45);
-}
-
-.playing-card.is-red {
-  color: var(--suit-red);
+  filter:
+    drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 .playing-card--large {
   width: 148px;
-  font-size: 26px;
   border-radius: 11px;
 }
 
 .playing-card--medium {
   width: 96px;
-  font-size: 18px;
 }
 
 .playing-card--small {
   width: 100%;
-  font-size: 13px;
-  border-width: 1.5px;
   border-radius: 6px;
 }
 
-/* Pip body — SVG that fills the card and positions suit marks per rank. The
-   SVG slots between the two corner indices, sized via CSS to fill the card
-   so its viewBox stays in lockstep with the card aspect. */
-.pc-pips {
-  position: absolute;
-  inset: 0;
+.pc-image {
+  display: block;
   width: 100%;
   height: 100%;
-  pointer-events: none;
-}
-
-.pc-pip {
-  font-size: 28px;
-  font-family: var(--serif);
-  font-weight: 700;
-  fill: currentColor;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-/* Ace gets one outsized pip — traditional decorated-ace look without the
-   ornamental flourish. */
-.pc-pip--ace {
-  font-size: 58px;
-}
-
-/* Face cards (J/Q/K) ship with their own border + indices baked into the
-   bundled image, so we render it edge-to-edge and skip the outer indices.
-   object-fit: cover handles the tiny 5:7 vs 5:7.2 aspect mismatch — the few
-   trimmed pixels are blank margin around the figure. */
-.pc-face {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-.pc-corner {
+/* Fallback rendering if a card asset is missing — defensive, shouldn't fire. */
+.pc-missing {
   position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  line-height: 0.92;
-  font-weight: 600;
-  z-index: 1;
-}
-
-.pc-corner--tl {
-  top: 0.32em;
-  left: 0.4em;
-}
-
-.pc-corner--br {
-  bottom: 0.32em;
-  right: 0.4em;
-  transform: rotate(180deg);
-}
-
-.pc-rank {
-  font-size: 1em;
-  font-weight: 700;
-}
-
-.pc-corner .pc-suit {
-  font-size: 0.82em;
-  margin-top: 1px;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--card-face);
+  border-radius: inherit;
 }
 
 /* ---------- Position display ---------- */
