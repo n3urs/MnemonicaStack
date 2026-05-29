@@ -7,22 +7,26 @@ export function Home({
   stats,
   onLearn,
   onStart,
+  onSession,
   onStats,
   onReference,
   onSetup,
   onInsights,
   onSync,
-  onCut,
+  onToolkit,
+  onControl,
 }: {
   stats: Stats;
   onLearn: () => void;
   onStart: (mode: Mode) => void;
+  onSession: () => void;
   onStats: () => void;
   onReference: () => void;
   onSetup: () => void;
   onInsights: () => void;
   onSync: () => void;
-  onCut: () => void;
+  onToolkit: () => void;
+  onControl: () => void;
 }) {
   const accuracy =
     stats.totalAnswered === 0 ? "—" : `${Math.round((stats.totalCorrect / stats.totalAnswered) * 100)}%`;
@@ -63,6 +67,13 @@ export function Home({
         </span>
       </button>
 
+      {learned > 0 && (
+        <button type="button" className="session-cta" onClick={onSession}>
+          <span className="session-cta-name">Today's session →</span>
+          <span className="session-cta-desc">A focused run, then drill whatever you miss.</span>
+        </button>
+      )}
+
       <p className="eyebrow">Drills</p>
       <div className="mode-list">
         {MODES.map((m) => (
@@ -71,9 +82,9 @@ export function Home({
             <span className="mode-desc">{m.description}</span>
           </button>
         ))}
-        <button type="button" className="mode-button" onClick={onCut}>
-          <span className="mode-name">Cut to it</span>
-          <span className="mode-desc">Get to any card by feel — cut to a crimp, then count.</span>
+        <button type="button" className="mode-button" onClick={onControl}>
+          <span className="mode-name">Control a card</span>
+          <span className="mode-desc">Cut to it, bring it to the top, or drill the TPC.</span>
         </button>
       </div>
 
@@ -82,6 +93,9 @@ export function Home({
       <div className="secondary-actions">
         <button type="button" className="btn btn-ghost" onClick={onReference}>
           See the full stack
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={onToolkit}>
+          Performance toolkit
         </button>
         <button type="button" className="btn btn-ghost" onClick={onSetup}>
           Set up a deck

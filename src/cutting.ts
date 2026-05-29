@@ -1,6 +1,7 @@
 // "Cut to it" system: reach any position from the nearest anchor.
 // Anchors: the top card (1) and bottom card (52) are free (no crimp needed);
-// Q♣ 13, K♦ 26 and A♦ 39 are your crimps/short card.
+// the two crimped Kings — K♣ at 18 and K♥ at 35 — are the quarter-deck anchors.
+// The farthest any card sits from its nearest anchor is 9, so every count is short.
 //
 // After an anchor (+offset): cut the break to the top, count off the FRONT edge,
 //   double-undercut to the bottom — card ends on top.
@@ -16,13 +17,12 @@ interface Anchor {
 
 const ANCHORS: Anchor[] = [
   { pos: 1, free: "top" },
-  { pos: 13, cutTop: "Cut Q♣ (crimp) to the top", cutBottom: "Cut Q♣ (crimp) to the bottom" },
-  { pos: 26, cutTop: "Cut K♦ (short card) to the top", cutBottom: "Cut K♦ (short card) to the bottom" },
-  { pos: 39, cutTop: "Cut A♦ (crimp) to the top", cutBottom: "Cut A♦ (crimp) to the bottom" },
+  { pos: 18, cutTop: "Cut K♣ (crimp) to the top", cutBottom: "Cut K♣ (crimp) to the bottom" },
+  { pos: 35, cutTop: "Cut K♥ (crimp) to the top", cutBottom: "Cut K♥ (crimp) to the bottom" },
   { pos: 52, free: "bottom" },
 ];
 
-const ANCHOR_NAME: Record<number, string> = { 1: "the top", 13: "Q♣", 26: "K♦", 39: "A♦", 52: "the bottom" };
+const ANCHOR_NAME: Record<number, string> = { 1: "the top", 18: "K♣", 35: "K♥", 52: "the bottom" };
 
 function nearestAnchor(pos: number): Anchor {
   return ANCHORS.reduce((best, a) => (Math.abs(pos - a.pos) < Math.abs(pos - best.pos) ? a : best));

@@ -960,10 +960,17 @@ button {
 }
 
 .reference-cell {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
 .ref-pos {
@@ -1721,4 +1728,510 @@ button {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ============================================================
+   v2 — sessions, control trainer, toolkit, distance, ref stats
+   ============================================================ */
+
+/* ---------- Home: Today's session CTA ---------- */
+.session-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px 18px;
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(212, 184, 120, 0.1), rgba(184, 153, 104, 0.02));
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.session-cta:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+}
+.session-cta:active {
+  transform: translateY(0) scale(0.995);
+}
+.session-cta-name {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--gold-bright);
+}
+.session-cta-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ---------- Drill: distance (two-card) layouts ---------- */
+.stimulus-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.pair-gap {
+  font-size: 28px;
+  color: var(--gold);
+}
+.reveal-pair {
+  display: flex;
+  gap: 6px;
+}
+.reveal-pair .playing-card {
+  width: 52px;
+  flex: none;
+}
+
+/* ---------- Control trainer ---------- */
+.control-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.control-tabs {
+  display: flex;
+  gap: 6px;
+}
+.control-tab {
+  flex: 1;
+  padding: 9px 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.control-tab.is-active {
+  color: var(--bg);
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 700;
+}
+.control-acc {
+  margin: -6px 0 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold);
+}
+.control-acc-sub {
+  color: var(--text-dim);
+}
+.control-blurb {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* TPC step list */
+.tpc-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tpc-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.tpc-step-num {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  color: var(--gold-bright);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.tpc-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tpc-step-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tpc-step-detail {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* Self-rating row */
+.rate-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+.rate-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.rate-buttons {
+  display: flex;
+  gap: 8px;
+}
+.rate-btn {
+  flex: 1;
+  padding: 13px 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: rgba(245, 239, 224, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+.rate-btn:active {
+  transform: scale(0.96);
+}
+.rate-nailed {
+  border-color: rgba(120, 170, 110, 0.6);
+}
+.rate-nailed:hover {
+  background: rgba(120, 170, 110, 0.16);
+}
+.rate-close:hover {
+  background: rgba(212, 184, 120, 0.14);
+}
+.rate-off {
+  border-color: rgba(168, 32, 26, 0.5);
+}
+.rate-off:hover {
+  background: rgba(168, 32, 26, 0.14);
+}
+
+.control-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(212, 184, 120, 0.05);
+}
+.route-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--text);
+  text-align: left;
+}
+.route-steps li::marker {
+  color: var(--gold);
+}
+
+/* ---------- Performance toolkit ---------- */
+.landmark-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+.landmark-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 64px;
+}
+.landmark-pos {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--gold);
+}
+.landmark-role {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.toolkit-picker {
+  margin-top: 10px;
+}
+.route-result {
+  margin-top: 14px;
+  padding: 16px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background: rgba(212, 184, 120, 0.06);
+}
+.route-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.route-head .playing-card {
+  width: 56px;
+  flex: none;
+}
+.route-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.route-card-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+.route-card-pos {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.route-summary {
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold-bright);
+}
+
+/* ---------- Today's session ---------- */
+.session-config,
+.session-summary,
+.session-done {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.session-sub {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  text-align: center;
+}
+.size-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.size-btn {
+  width: 64px;
+  height: 64px;
+  font-family: var(--serif);
+  font-size: 26px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: rgba(245, 239, 224, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.size-btn.is-active {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--bg);
+  font-weight: 700;
+}
+.session-begin {
+  align-self: center;
+  min-width: 180px;
+}
+.session-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.session-score-big {
+  font-family: var(--serif);
+  font-size: 46px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+}
+.session-score-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+.session-perfect {
+  font-size: 15px;
+  color: var(--text);
+}
+.session-missed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.session-missed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.session-missed-row .playing-card {
+  width: 44px;
+}
+.session-missed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.session-missed-pos {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gold);
+}
+.session-missed-hook {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--text);
+}
+.session-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.session-actions .btn {
+  flex: 1;
+}
+.session-done {
+  align-items: center;
+  text-align: center;
+  margin-top: 30px;
+}
+.session-done-mark {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  color: var(--gold-bright);
+  font-size: 32px;
+}
+
+/* ---------- Reference: struggling badge + stat detail ---------- */
+.ref-badge {
+  position: absolute;
+  top: 18px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--suit-red);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.ref-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 5, 4, 0.78);
+  backdrop-filter: blur(3px);
+}
+.ref-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  padding: 22px;
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  background: var(--bg-warm);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+.ref-detail .playing-card {
+  width: 92px;
+}
+.ref-detail-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+.ref-detail-name {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ref-detail-pos {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.ref-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+.ref-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ref-stat-value {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--gold-bright);
+}
+.ref-stat-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+.ref-detail-close {
+  width: 100%;
 }

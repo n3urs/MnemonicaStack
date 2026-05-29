@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { selectLearnedCard, type Stats } from "../storage";
-import { buildQuestion, type Mode, type Question } from "../quiz";
+import { buildQuestion, needsSecondCard, type Mode, type Question } from "../quiz";
 import { cardAt, cardName, positionOf } from "../stack";
 import { defaultCardImage, positionPeg } from "../mnemonics";
 import { PlayingCard } from "../components/PlayingCard";
@@ -48,6 +48,13 @@ export function Drill({
     const focus = selectLearnedCard(statsRef.current, lastRef.current);
     if (!focus) return null;
     lastRef.current = focus;
+    if (needsSecondCard(mode)) {
+      // Distance needs a second, distinct learned card. If only one card is
+      // learned there's nothing to measure against — bail to the empty state.
+      const second = selectLearnedCard(statsRef.current, focus);
+      if (!second || second === focus) return null;
+      return buildQuestion(mode, focus, second);
+    }
     return buildQuestion(mode, focus);
   }
 
@@ -199,7 +206,7 @@ export function Drill({
 
       {phase === "answering" ? (
         <>
-          {question.promptKind === "card" && (
+          {question.promptKind === "card" && !question.promptCardB && (
             <button
               type="button"
               className="prompt-toggle"
@@ -213,7 +220,15 @@ export function Drill({
             </button>
           )}
           <div className="stimulus" key={round}>
-            {audioPrompt && question.promptKind === "card" && question.promptCard ? (
+            {question.promptCardB ? (
+              <div className="stimulus-pair">
+                <PlayingCard card={question.promptCard!} size="medium" />
+                <span className="pair-gap" aria-hidden="true">
+                  ↔
+                </span>
+                <PlayingCard card={question.promptCardB} size="medium" />
+              </div>
+            ) : audioPrompt && question.promptKind === "card" && question.promptCard ? (
               <button
                 type="button"
                 className="spoken-card"
@@ -235,7 +250,7 @@ export function Drill({
             )}
           </div>
           {question.inputKind === "number" ? (
-            <NumberGrid onSelect={handleNumber} />
+            <NumberGrid onSelect={handleNumber} count={question.mode === "distance" ? 51 : 52} />
           ) : (
             <CardGrid onSelect={handleCard} />
           )}
@@ -257,18 +272,25 @@ export function Drill({
           <div className="reveal">
             <div className="reveal-item">
               <span className="reveal-label">Prompt</span>
-              <Stimulus
-                kind={question.promptKind}
-                card={question.promptCard}
-                position={question.promptPosition}
-                size="medium"
-              />
+              {question.promptCardB ? (
+                <div className="reveal-pair">
+                  <PlayingCard card={question.promptCard!} size="small" />
+                  <PlayingCard card={question.promptCardB} size="small" />
+                </div>
+              ) : (
+                <Stimulus
+                  kind={question.promptKind}
+                  card={question.promptCard}
+                  position={question.promptPosition}
+                  size="medium"
+                />
+              )}
             </div>
             <span className="reveal-arrow" aria-hidden="true">
               →
             </span>
             <div className="reveal-item">
-              <span className="reveal-label">Answer</span>
+              <span className="reveal-label">{question.mode === "distance" ? "Apart" : "Answer"}</span>
               <Stimulus
                 kind={question.inputKind === "number" ? "position" : "card"}
                 card={question.answerCard}
@@ -277,12 +299,19 @@ export function Drill({
               />
             </div>
           </div>
-          {phase === "answered" && result && !result.correct && (
+          {question.mode === "distance" && (
+            <p className="your-choice">
+              {cardName(question.promptCard!)} is at {positionOf(question.promptCard!)}; {cardName(question.promptCardB!)} is at {positionOf(question.promptCardB!)}.
+            </p>
+          )}
+          {phase === "answered" && result && !result.correct && question.mode !== "distance" && (
             <p className="your-choice">
               {typeof result.choice === "number" ? (
                 <>
                   You chose {result.choice}
-                  <span className="your-choice-sub"> — which is {cardName(cardAt(result.choice))}</span>
+                  {question.mode === "cardToPosition" && (
+                    <span className="your-choice-sub"> — which is {cardName(cardAt(result.choice))}</span>
+                  )}
                 </>
               ) : (
                 <>

@@ -23,7 +23,7 @@ export function Insights({ onBack, onSetup }: { onBack: () => void; onSetup: () 
       <Ornament />
 
       <section className="setup-section">
-        <h2 className="section-title">Three self-locating cards</h2>
+        <h2 className="section-title">Exactly three self-locating cards</h2>
         <p className="setup-text">
           These three sit on their own number — the rank tells you the position directly, so there's
           no peg or link to learn. Three freebies.
@@ -36,6 +36,37 @@ export function Insights({ onBack, onSetup }: { onBack: () => void; onSetup: () 
             </div>
           ))}
         </div>
+        <p className="setup-caveat">
+          Why only three? A card's rank value runs A=1 up to K=13, so rank can <em>only</em> equal
+          position within the first 13 slots — beyond 13, no card's rank can reach. Of those 13
+          positions, just 2♥, 6♦ and 9♠ happen to land on their own number.
+        </p>
+      </section>
+
+      <Ornament />
+
+      <section className="setup-section">
+        <h2 className="section-title">The crimp landmarks</h2>
+        <p className="setup-text">
+          Crimp the two Kings near the quarter points — <strong>K♣ at 18</strong> and{" "}
+          <strong>K♥ at 35</strong>. With the free top (4♣) and bottom (9♦), they divide the deck so
+          no card is ever more than 9 from an anchor — a fast count to any selection.
+        </p>
+        <div className="insight-cards">
+          <div className="insight-card">
+            <PlayingCard card="KC" size="small" />
+            <span className="insight-card-pos">position 18</span>
+          </div>
+          <div className="insight-card">
+            <PlayingCard card="KH" size="small" />
+            <span className="insight-card-pos">position 35</span>
+          </div>
+        </div>
+        <p className="setup-caveat">
+          Faro fact: after one out-faro the two crimped Kings <strong>swap positions</strong> (18 ↔
+          35), which lets you track them through a genuine-looking shuffle. (Eight out-faros return
+          the whole deck to stack order.)
+        </p>
       </section>
 
       <Ornament />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   applyAnswer,
+  applyControlRating,
   applyCutNote,
   applyNote,
   applyPeg,
@@ -9,6 +10,8 @@ import {
   loadStats,
   saveStats,
   type CardNote,
+  type ControlMode,
+  type ControlRating,
   type Stats,
 } from "./storage";
 import {
@@ -27,19 +30,23 @@ import { Reference } from "./screens/Reference";
 import { Setup } from "./screens/Setup";
 import { Insights } from "./screens/Insights";
 import { Sync } from "./screens/Sync";
-import { CutTrainer } from "./screens/CutTrainer";
+import { ControlTrainer } from "./screens/ControlTrainer";
+import { Toolkit } from "./screens/Toolkit";
+import { Session } from "./screens/Session";
 import { SoundKey } from "./components/SoundKey";
 
 type Screen =
   | { name: "home" }
   | { name: "learn" }
   | { name: "drill"; mode: Mode }
+  | { name: "session" }
   | { name: "stats" }
   | { name: "reference" }
   | { name: "setup" }
   | { name: "insights" }
   | { name: "sync" }
-  | { name: "cut" };
+  | { name: "toolkit" }
+  | { name: "control" };
 
 export type SyncStatus = { busy: boolean; message: string };
 
@@ -208,6 +215,14 @@ export default function App() {
     });
   }, []);
 
+  const rateControl = useCallback((mode: ControlMode, rating: ControlRating) => {
+    setStats((prev) => {
+      const next = applyControlRating(prev, mode, rating);
+      saveStats(next);
+      return next;
+    });
+  }, []);
+
   const resetStats = useCallback(() => {
     const fresh = { ...defaultStats(), updatedAt: Date.now() };
     saveStats(fresh);
@@ -217,9 +232,10 @@ export default function App() {
   const goHome = () => setScreen({ name: "home" });
 
   // Lock scroll on screens whose content fits the viewport — kills the small
-  // "scroll into nothing" feel on the drill, learn and cut trainer.
+  // "scroll into nothing" feel on the drill and learn screens. The control and
+  // session screens manage their own lock (they have scrollable sub-views).
   useEffect(() => {
-    const noScroll = screen.name === "drill" || screen.name === "learn" || screen.name === "cut";
+    const noScroll = screen.name === "drill" || screen.name === "learn";
     document.body.classList.toggle("no-scroll", noScroll);
     return () => document.body.classList.remove("no-scroll");
   }, [screen]);
@@ -231,12 +247,14 @@ export default function App() {
           stats={stats}
           onLearn={() => setScreen({ name: "learn" })}
           onStart={(mode) => setScreen({ name: "drill", mode })}
+          onSession={() => setScreen({ name: "session" })}
           onStats={() => setScreen({ name: "stats" })}
           onReference={() => setScreen({ name: "reference" })}
           onSetup={() => setScreen({ name: "setup" })}
           onInsights={() => setScreen({ name: "insights" })}
           onSync={() => setScreen({ name: "sync" })}
-          onCut={() => setScreen({ name: "cut" })}
+          onToolkit={() => setScreen({ name: "toolkit" })}
+          onControl={() => setScreen({ name: "control" })}
         />
       )}
       {screen.name === "learn" && (
@@ -251,6 +269,14 @@ export default function App() {
       {screen.name === "drill" && (
         <Drill
           mode={screen.mode}
+          stats={stats}
+          onRecord={recordAnswer}
+          onBack={goHome}
+          onLearn={() => setScreen({ name: "learn" })}
+        />
+      )}
+      {screen.name === "session" && (
+        <Session
           stats={stats}
           onRecord={recordAnswer}
           onBack={goHome}
@@ -275,10 +301,12 @@ export default function App() {
           onBack={goHome}
         />
       )}
-      {screen.name === "cut" && (
-        <CutTrainer
+      {screen.name === "toolkit" && <Toolkit onBack={goHome} />}
+      {screen.name === "control" && (
+        <ControlTrainer
           stats={stats}
           onSetCutNote={setCutNote}
+          onRateControl={rateControl}
           onBack={goHome}
           onLearn={() => setScreen({ name: "learn" })}
         />

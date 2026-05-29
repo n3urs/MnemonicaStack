@@ -20,6 +20,23 @@ export interface CardNote {
   link?: string; // user's personal linking image
 }
 
+// Self-rated accuracy for the "Control a Card" trainer. Deliberately kept
+// apart from recall stats — controlling a card is a physical skill, not a
+// memory one, so it gets its own tally.
+export interface ControlStat {
+  attempts: number;
+  nailed: number; // "Nailed it"
+  close: number; // "1–2 off"
+  off: number; // "Way off"
+}
+
+export type ControlMode = "cutToPosition" | "controlToTop" | "tpc";
+export type ControlRating = "nailed" | "close" | "off";
+
+export function emptyControlStat(): ControlStat {
+  return { attempts: 0, nailed: 0, close: 0, off: 0 };
+}
+
 export interface Stats {
   totalAnswered: number;
   totalCorrect: number;
@@ -32,6 +49,7 @@ export interface Stats {
   notes: Record<string, CardNote>;
   pegs: Record<string, string>; // position (as string) -> user's peg override
   cutNotes: Record<string, string>; // position -> user's "cut to it" method override
+  control: Record<ControlMode, ControlStat>; // self-rated control-trainer accuracy
   updatedAt: number; // ms epoch of last local change, for sync conflict resolution
 }
 
@@ -51,6 +69,11 @@ export function defaultStats(): Stats {
     notes: {},
     pegs: {},
     cutNotes: {},
+    control: {
+      cutToPosition: emptyControlStat(),
+      controlToTop: emptyControlStat(),
+      tpc: emptyControlStat(),
+    },
     updatedAt: 0,
   };
 }
@@ -67,6 +90,11 @@ export function normalizeStats(raw: Partial<Stats> | null | undefined): Stats {
     notes: r.notes ?? {},
     pegs: r.pegs ?? {},
     cutNotes: r.cutNotes ?? {},
+    control: {
+      cutToPosition: r.control?.cutToPosition ?? emptyControlStat(),
+      controlToTop: r.control?.controlToTop ?? emptyControlStat(),
+      tpc: r.control?.tpc ?? emptyControlStat(),
+    },
     updatedAt: r.updatedAt ?? 0,
   };
 }
@@ -166,6 +194,29 @@ export function applyCutNote(stats: Stats, position: number, value: string): Sta
   return { ...stats, cutNotes: { ...stats.cutNotes, [position]: value }, updatedAt: Date.now() };
 }
 
+// Record a self-rating from the Control-a-Card trainer. Lives in its own
+// `control` bucket so it never touches recall accuracy.
+export function applyControlRating(stats: Stats, mode: ControlMode, rating: ControlRating): Stats {
+  const prev = stats.control[mode] ?? emptyControlStat();
+  const next: ControlStat = {
+    attempts: prev.attempts + 1,
+    nailed: prev.nailed + (rating === "nailed" ? 1 : 0),
+    close: prev.close + (rating === "close" ? 1 : 0),
+    off: prev.off + (rating === "off" ? 1 : 0),
+  };
+  return {
+    ...stats,
+    control: { ...stats.control, [mode]: next },
+    updatedAt: Date.now(),
+  };
+}
+
+// "Nailed it" share, 0–100, or null when there are no attempts yet.
+export function controlAccuracy(stat: ControlStat): number | null {
+  if (stat.attempts === 0) return null;
+  return Math.round((stat.nailed / stat.attempts) * 100);
+}
+
 export function isLearned(stats: Stats, card: string): boolean {
   return !!stats.learn[card]?.introduced;
 }
@@ -211,4 +262,26 @@ export function selectLearnedCard(stats: Stats, exclude?: string): string | null
     const boxBoost = 6 - ln.box;
     return cardWeight(stats, c) + dueBoost + boxBoost;
   });
+}
+
+// Pick up to `n` DISTINCT learned cards for a focused session, using the same
+// Leitner/recent-wrong weighting as the open-ended drill. If fewer than `n`
+// cards are learned, returns all of them. Order is the weighted draw order.
+export function selectSessionCards(stats: Stats, n: number): string[] {
+  const pool = STACK.filter((c) => stats.learn[c]?.introduced);
+  const today = dateStr(new Date());
+  const weightOf = (c: string) => {
+    const ln = stats.learn[c]!;
+    const dueBoost = ln.due <= today ? 4 : 0;
+    const boxBoost = 6 - ln.box;
+    return cardWeight(stats, c) + dueBoost + boxBoost;
+  };
+  const remaining = [...pool];
+  const chosen: string[] = [];
+  while (chosen.length < n && remaining.length > 0) {
+    const pick = weightedPick(remaining, weightOf);
+    chosen.push(pick);
+    remaining.splice(remaining.indexOf(pick), 1);
+  }
+  return chosen;
 }

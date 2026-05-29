@@ -3,10 +3,16 @@ import { isRed, SUIT_SYMBOLS } from "../stack";
 const GRID_SUITS = ["S", "H", "D", "C"];
 const GRID_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"];
 
-export function NumberGrid({ onSelect }: { onSelect: (n: number) => void }) {
+export function NumberGrid({
+  onSelect,
+  count = 52,
+}: {
+  onSelect: (n: number) => void;
+  count?: number;
+}) {
   return (
     <div className="number-grid">
-      {Array.from({ length: 52 }, (_, i) => i + 1).map((n) => (
+      {Array.from({ length: count }, (_, i) => i + 1).map((n) => (
         <button key={n} type="button" className="grid-cell num-cell" onClick={() => onSelect(n)}>
           {n}
         </button>
