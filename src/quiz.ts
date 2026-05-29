@@ -3,7 +3,6 @@ import { nextCard, positionOf, prevCard } from "./stack";
 export type Mode =
   | "cardToPosition"
   | "positionToCard"
-  | "neighbours"
   | "sequence"
   | "reverseSequence"
   | "distance";
@@ -19,7 +18,6 @@ export const MODES: ModeInfo[] = [
   { id: "positionToCard", name: "Position → card", description: "See a position, recall the card that lives there." },
   { id: "sequence", name: "What comes next", description: "See a card, recall the one that follows it." },
   { id: "reverseSequence", name: "What comes before", description: "See a card, recall the one just before it." },
-  { id: "neighbours", name: "Neighbours", description: "Recall the card just before or after the one shown." },
   { id: "distance", name: "How far apart", description: "See two cards, count the gap between their positions." },
 ];
 
@@ -70,17 +68,6 @@ export function buildQuestion(mode: Mode, focusCard: string, secondCard?: string
         promptText: "Which card sits at this position?",
         answerCard: focusCard,
       };
-    case "neighbours": {
-      const before = Math.random() < 0.5;
-      return {
-        ...base,
-        inputKind: "card",
-        promptKind: "card",
-        promptCard: focusCard,
-        promptText: before ? "Which card comes before this one?" : "Which card comes after this one?",
-        answerCard: before ? prevCard(focusCard) : nextCard(focusCard),
-      };
-    }
     case "sequence":
       return {
         ...base,

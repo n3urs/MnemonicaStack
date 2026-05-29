@@ -2005,6 +2005,62 @@ button {
   width: 56px;
   flex: none;
 }
+
+/* ---------- Viewport-fit for locked screens ----------
+   The drill / session-run / control card modes set body.no-scroll. Make the
+   .app fill the viewport exactly (no clipped overflow) and let the answer
+   area take the slack, so the toolbar (top) and footer controls (the
+   "I don't remember" link, the rate buttons) are always reachable. The big
+   card scales down on short phones so the grid rarely needs to scroll. */
+body.no-scroll .app:has(.drill),
+body.no-scroll .app:has(.control-screen) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+body.no-scroll .drill,
+body.no-scroll .control-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+}
+body.no-scroll .stimulus {
+  flex: none;
+}
+body.no-scroll .stimulus .playing-card,
+body.no-scroll .stimulus .spoken-card {
+  width: min(148px, 19dvh);
+}
+/* Grids / reveal blocks absorb the leftover height and scroll only if the
+   content is still taller than the space that's left. */
+body.no-scroll .number-grid,
+body.no-scroll .card-grid,
+body.no-scroll .drill .result,
+body.no-scroll .control-screen .result {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+/* Control reveal: pin the rate buttons, scroll the method text above them. */
+body.no-scroll .control-screen .result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body.no-scroll .control-screen .control-reveal {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+body.no-scroll .control-screen .rate-row {
+  flex: none;
+}
 .route-head-text {
   display: flex;
   flex-direction: column;
