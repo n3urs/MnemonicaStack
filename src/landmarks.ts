@@ -1,7 +1,7 @@
 // Shared landmark data for the performance tools — crimps, anchors, the
 // self-locating cards, the TPC step list, and the "get a named card to the
-// top" routing logic. Kept in one place so the Toolkit, Insights, cutting
-// and control screens all agree.
+// top" routing logic. Kept in one place so the Toolkit and Insights screens
+// agree on the landmarks.
 
 import { cardName, positionOf } from "./stack";
 

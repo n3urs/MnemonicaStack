@@ -14,7 +14,7 @@ export function Home({
   onInsights,
   onSync,
   onToolkit,
-  onControl,
+  onTimed,
 }: {
   stats: Stats;
   onLearn: () => void;
@@ -26,11 +26,12 @@ export function Home({
   onInsights: () => void;
   onSync: () => void;
   onToolkit: () => void;
-  onControl: () => void;
+  onTimed: () => void;
 }) {
   const accuracy =
     stats.totalAnswered === 0 ? "—" : `${Math.round((stats.totalCorrect / stats.totalAnswered) * 100)}%`;
   const learned = learnedCount(stats);
+  const bestPerCard = stats.timedBest === null ? "—" : `${stats.timedBest.toFixed(1)}s`;
 
   return (
     <div className="screen home">
@@ -41,11 +42,12 @@ export function Home({
         </p>
       </header>
 
-      <div className="metric-grid metric-grid--4">
+      <div className="metric-grid metric-grid--5">
         <MetricBox label="Accuracy" value={accuracy} />
-        <MetricBox label="Answered" value={stats.totalAnswered} />
         <MetricBox label="Best run" value={stats.bestStreak} />
         <MetricBox label="Day streak" value={stats.dailyStreak} />
+        <MetricBox label="Best/card" value={bestPerCard} />
+        <MetricBox label="Answered" value={stats.totalAnswered} />
       </div>
 
       <Ornament />
@@ -82,9 +84,9 @@ export function Home({
             <span className="mode-desc">{m.description}</span>
           </button>
         ))}
-        <button type="button" className="mode-button" onClick={onControl}>
-          <span className="mode-name">Control a card</span>
-          <span className="mode-desc">Cut to it, bring it to the top, or drill the TPC.</span>
+        <button type="button" className="mode-button" onClick={onTimed}>
+          <span className="mode-name">Timed run</span>
+          <span className="mode-desc">Race the clock cutting to 5 cards; beat your best time.</span>
         </button>
       </div>
 

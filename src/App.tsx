@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   applyAnswer,
-  applyControlRating,
-  applyCutNote,
   applyNote,
   applyPeg,
+  applyTimedRun,
   defaultStats,
   introduceCard,
   loadStats,
   saveStats,
   type CardNote,
-  type ControlMode,
-  type ControlRating,
   type Stats,
 } from "./storage";
 import {
@@ -30,9 +27,9 @@ import { Reference } from "./screens/Reference";
 import { Setup } from "./screens/Setup";
 import { Insights } from "./screens/Insights";
 import { Sync } from "./screens/Sync";
-import { ControlTrainer } from "./screens/ControlTrainer";
 import { Toolkit } from "./screens/Toolkit";
 import { Session } from "./screens/Session";
+import { Timed } from "./screens/Timed";
 import { SoundKey } from "./components/SoundKey";
 
 type Screen =
@@ -46,7 +43,7 @@ type Screen =
   | { name: "insights" }
   | { name: "sync" }
   | { name: "toolkit" }
-  | { name: "control" };
+  | { name: "timed" };
 
 export type SyncStatus = { busy: boolean; message: string };
 
@@ -207,17 +204,9 @@ export default function App() {
     });
   }, []);
 
-  const setCutNote = useCallback((position: number, value: string) => {
+  const recordTimedRun = useCallback((avgSeconds: number) => {
     setStats((prev) => {
-      const next = applyCutNote(prev, position, value);
-      saveStats(next);
-      return next;
-    });
-  }, []);
-
-  const rateControl = useCallback((mode: ControlMode, rating: ControlRating) => {
-    setStats((prev) => {
-      const next = applyControlRating(prev, mode, rating);
+      const next = applyTimedRun(prev, avgSeconds);
       saveStats(next);
       return next;
     });
@@ -254,7 +243,7 @@ export default function App() {
           onInsights={() => setScreen({ name: "insights" })}
           onSync={() => setScreen({ name: "sync" })}
           onToolkit={() => setScreen({ name: "toolkit" })}
-          onControl={() => setScreen({ name: "control" })}
+          onTimed={() => setScreen({ name: "timed" })}
         />
       )}
       {screen.name === "learn" && (
@@ -302,11 +291,10 @@ export default function App() {
         />
       )}
       {screen.name === "toolkit" && <Toolkit onBack={goHome} />}
-      {screen.name === "control" && (
-        <ControlTrainer
+      {screen.name === "timed" && (
+        <Timed
           stats={stats}
-          onSetCutNote={setCutNote}
-          onRateControl={rateControl}
+          onComplete={recordTimedRun}
           onBack={goHome}
           onLearn={() => setScreen({ name: "learn" })}
         />

@@ -20,23 +20,6 @@ export interface CardNote {
   link?: string; // user's personal linking image
 }
 
-// Self-rated accuracy for the "Control a Card" trainer. Deliberately kept
-// apart from recall stats — controlling a card is a physical skill, not a
-// memory one, so it gets its own tally.
-export interface ControlStat {
-  attempts: number;
-  nailed: number; // "Nailed it"
-  close: number; // "1–2 off"
-  off: number; // "Way off"
-}
-
-export type ControlMode = "cutToPosition" | "controlToTop" | "tpc";
-export type ControlRating = "nailed" | "close" | "off";
-
-export function emptyControlStat(): ControlStat {
-  return { attempts: 0, nailed: 0, close: 0, off: 0 };
-}
-
 export interface Stats {
   totalAnswered: number;
   totalCorrect: number;
@@ -48,8 +31,8 @@ export interface Stats {
   learn: Record<string, LearnCard>;
   notes: Record<string, CardNote>;
   pegs: Record<string, string>; // position (as string) -> user's peg override
-  cutNotes: Record<string, string>; // position -> user's "cut to it" method override
-  control: Record<ControlMode, ControlStat>; // self-rated control-trainer accuracy
+  timedBest: number | null; // best (lowest) average seconds per card in a timed run
+  timedRuns: number; // how many timed runs completed
   updatedAt: number; // ms epoch of last local change, for sync conflict resolution
 }
 
@@ -68,12 +51,8 @@ export function defaultStats(): Stats {
     learn: {},
     notes: {},
     pegs: {},
-    cutNotes: {},
-    control: {
-      cutToPosition: emptyControlStat(),
-      controlToTop: emptyControlStat(),
-      tpc: emptyControlStat(),
-    },
+    timedBest: null,
+    timedRuns: 0,
     updatedAt: 0,
   };
 }
@@ -89,12 +68,8 @@ export function normalizeStats(raw: Partial<Stats> | null | undefined): Stats {
     learn: r.learn ?? {},
     notes: r.notes ?? {},
     pegs: r.pegs ?? {},
-    cutNotes: r.cutNotes ?? {},
-    control: {
-      cutToPosition: r.control?.cutToPosition ?? emptyControlStat(),
-      controlToTop: r.control?.controlToTop ?? emptyControlStat(),
-      tpc: r.control?.tpc ?? emptyControlStat(),
-    },
+    timedBest: r.timedBest ?? null,
+    timedRuns: r.timedRuns ?? 0,
     updatedAt: r.updatedAt ?? 0,
   };
 }
@@ -190,31 +165,16 @@ export function applyPeg(stats: Stats, position: number, value: string): Stats {
   return { ...stats, pegs: { ...stats.pegs, [position]: value }, updatedAt: Date.now() };
 }
 
-export function applyCutNote(stats: Stats, position: number, value: string): Stats {
-  return { ...stats, cutNotes: { ...stats.cutNotes, [position]: value }, updatedAt: Date.now() };
-}
-
-// Record a self-rating from the Control-a-Card trainer. Lives in its own
-// `control` bucket so it never touches recall accuracy.
-export function applyControlRating(stats: Stats, mode: ControlMode, rating: ControlRating): Stats {
-  const prev = stats.control[mode] ?? emptyControlStat();
-  const next: ControlStat = {
-    attempts: prev.attempts + 1,
-    nailed: prev.nailed + (rating === "nailed" ? 1 : 0),
-    close: prev.close + (rating === "close" ? 1 : 0),
-    off: prev.off + (rating === "off" ? 1 : 0),
-  };
+// Record a finished timed run. `avgSeconds` is total time / cards found.
+// Keeps the lowest average as the personal best.
+export function applyTimedRun(stats: Stats, avgSeconds: number): Stats {
+  const best = stats.timedBest === null ? avgSeconds : Math.min(stats.timedBest, avgSeconds);
   return {
     ...stats,
-    control: { ...stats.control, [mode]: next },
+    timedBest: best,
+    timedRuns: stats.timedRuns + 1,
     updatedAt: Date.now(),
   };
-}
-
-// "Nailed it" share, 0–100, or null when there are no attempts yet.
-export function controlAccuracy(stat: ControlStat): number | null {
-  if (stat.attempts === 0) return null;
-  return Math.round((stat.nailed / stat.attempts) * 100);
 }
 
 export function isLearned(stats: Stats, card: string): boolean {

@@ -1790,159 +1790,138 @@ button {
   flex: none;
 }
 
-/* ---------- Control trainer ---------- */
-.control-screen {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.control-tabs {
-  display: flex;
+/* ---------- Timed run ---------- */
+/* Five metrics on the home row — a touch tighter than the four-up. */
+.metric-grid--5 {
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
-.control-tab {
-  flex: 1;
-  padding: 9px 6px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text-dim);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: none;
-  cursor: pointer;
-  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+.metric-grid--5 .metric-box {
+  padding: 12px 3px;
 }
-.control-tab.is-active {
-  color: var(--bg);
-  background: var(--gold);
-  border-color: var(--gold);
-  font-weight: 700;
-}
-.control-acc {
-  margin: -6px 0 0;
-  text-align: center;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--gold);
-}
-.control-acc-sub {
-  color: var(--text-dim);
-}
-.control-blurb {
-  margin: 0;
-  font-family: var(--serif);
+.metric-grid--5 .metric-value {
   font-size: 17px;
-  line-height: 1.5;
-  color: var(--text-dim);
+}
+.metric-grid--5 .metric-label {
+  font-size: 9px;
+  letter-spacing: 0.2px;
+}
+
+.timed-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.timed-ready,
+.timed-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   text-align: center;
 }
-
-/* TPC step list */
-.tpc-steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.timed-ready {
+  margin-top: 8px;
+}
+.timed-best-badge {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-.tpc-step {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-.tpc-step-num {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1px solid var(--gold);
-  color: var(--gold-bright);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-.tpc-step-body {
-  display: flex;
-  flex-direction: column;
   gap: 3px;
+  padding: 16px 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: rgba(212, 184, 120, 0.05);
 }
-.tpc-step-title {
+.timed-best-value {
   font-family: var(--serif);
-  font-size: 19px;
-  font-weight: 600;
-  color: var(--text);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
 }
-.tpc-step-detail {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--text-dim);
-}
-
-/* Self-rating row */
-.rate-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  margin-top: 6px;
-}
-.rate-label {
+.timed-best-label,
+.timed-best-none {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.4px;
   color: var(--text-dim);
-  text-align: center;
-}
-.rate-buttons {
-  display: flex;
-  gap: 8px;
-}
-.rate-btn {
-  flex: 1;
-  padding: 13px 6px;
-  font-family: var(--mono);
-  font-size: 12px;
-  border-radius: 9px;
-  border: 1px solid var(--line-strong);
-  background: rgba(245, 239, 224, 0.03);
-  color: var(--text);
-  cursor: pointer;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
-}
-.rate-btn:active {
-  transform: scale(0.96);
-}
-.rate-nailed {
-  border-color: rgba(120, 170, 110, 0.6);
-}
-.rate-nailed:hover {
-  background: rgba(120, 170, 110, 0.16);
-}
-.rate-close:hover {
-  background: rgba(212, 184, 120, 0.14);
-}
-.rate-off {
-  border-color: rgba(168, 32, 26, 0.5);
-}
-.rate-off:hover {
-  background: rgba(168, 32, 26, 0.14);
 }
 
-.control-reveal {
+/* Countdown */
+.timed-countdown {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 16px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: rgba(212, 184, 120, 0.05);
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 50dvh;
 }
+.countdown-num {
+  font-family: var(--serif);
+  font-size: 120px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+  animation: countPop 800ms ease;
+}
+@keyframes countPop {
+  0% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.85;
+  }
+}
+.countdown-sub {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+/* Done */
+.timed-pb {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: var(--gold-bright);
+  padding: 8px 16px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  background: rgba(212, 184, 120, 0.1);
+}
+.timed-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.timed-result-avg {
+  font-family: var(--serif);
+  font-size: 60px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+}
+.timed-result-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+/* The big Found-it button on the running screen. */
+.timed-found {
+  margin-top: auto;
+}
+
 .route-steps {
   margin: 0;
   padding-left: 20px;
@@ -2007,13 +1986,13 @@ button {
 }
 
 /* ---------- Viewport-fit for locked screens ----------
-   The drill / session-run / control card modes set body.no-scroll. Make the
-   .app fill the viewport exactly (no clipped overflow) and let the answer
-   area take the slack, so the toolbar (top) and footer controls (the
-   "I don't remember" link, the rate buttons) are always reachable. The big
-   card scales down on short phones so the grid rarely needs to scroll. */
+   The drill / session-run / timed-run screens set body.no-scroll. Make the
+   .app fill the viewport exactly (no clipped overflow) and let the answer area
+   take the slack, so the toolbar (top) and footer controls (the "I don't
+   remember" link, the "Found it" button) are always reachable. The big card
+   scales down on short phones so the grid rarely needs to scroll. */
 body.no-scroll .app:has(.drill),
-body.no-scroll .app:has(.control-screen) {
+body.no-scroll .app:has(.timed-running) {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -2022,7 +2001,7 @@ body.no-scroll .app:has(.control-screen) {
   padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
 body.no-scroll .drill,
-body.no-scroll .control-screen {
+body.no-scroll .timed-running {
   flex: 1 1 auto;
   min-height: 0;
   gap: 12px;
@@ -2038,28 +2017,13 @@ body.no-scroll .stimulus .spoken-card {
    content is still taller than the space that's left. */
 body.no-scroll .number-grid,
 body.no-scroll .card-grid,
-body.no-scroll .drill .result,
-body.no-scroll .control-screen .result {
+body.no-scroll .drill .result {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   align-content: start;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-}
-/* Control reveal: pin the rate buttons, scroll the method text above them. */
-body.no-scroll .control-screen .result {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-body.no-scroll .control-screen .control-reveal {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
-body.no-scroll .control-screen .rate-row {
-  flex: none;
 }
 .route-head-text {
   display: flex;
