@@ -20,6 +20,12 @@ export interface CardNote {
   link?: string; // user's personal linking image
 }
 
+// One finished timed run: average seconds per card, and when it happened.
+export interface TimedRun {
+  avg: number;
+  at: number; // ms epoch
+}
+
 export interface Stats {
   totalAnswered: number;
   totalCorrect: number;
@@ -31,10 +37,14 @@ export interface Stats {
   learn: Record<string, LearnCard>;
   notes: Record<string, CardNote>;
   pegs: Record<string, string>; // position (as string) -> user's peg override
-  timedBest: number | null; // best (lowest) average seconds per card in a timed run
-  timedRuns: number; // how many timed runs completed
+  timedHistory: TimedRun[]; // every completed timed run, oldest → newest (capped)
+  timedBest: number | null; // best (lowest) average seconds per card — derived from history
+  timedRuns: number; // how many timed runs completed — derived from history
   updatedAt: number; // ms epoch of last local change, for sync conflict resolution
 }
+
+// Keep the history bounded so storage / sync payloads stay small.
+const TIMED_HISTORY_CAP = 100;
 
 // Days until a card is due again, indexed by Leitner box (1..5).
 const SRS_INTERVALS = [0, 0, 1, 2, 4, 7];
@@ -51,10 +61,15 @@ export function defaultStats(): Stats {
     learn: {},
     notes: {},
     pegs: {},
+    timedHistory: [],
     timedBest: null,
     timedRuns: 0,
     updatedAt: 0,
   };
+}
+
+function bestOf(history: TimedRun[]): number | null {
+  return history.length ? Math.min(...history.map((r) => r.avg)) : null;
 }
 
 // Merge an arbitrary (possibly partial) object onto a fresh default, so data
@@ -68,10 +83,19 @@ export function normalizeStats(raw: Partial<Stats> | null | undefined): Stats {
     learn: r.learn ?? {},
     notes: r.notes ?? {},
     pegs: r.pegs ?? {},
-    timedBest: r.timedBest ?? null,
-    timedRuns: r.timedRuns ?? 0,
+    ...timedFields(r),
     updatedAt: r.updatedAt ?? 0,
   };
+}
+
+// Normalise the timed fields, deriving best/count from the history. Migrates
+// pre-history saves (which only had a `timedBest`) by seeding one run so the
+// graph and best survive the upgrade.
+function timedFields(r: Partial<Stats>): Pick<Stats, "timedHistory" | "timedBest" | "timedRuns"> {
+  const seeded =
+    r.timedHistory ?? (r.timedBest != null ? [{ avg: r.timedBest, at: Date.now() }] : []);
+  const timedHistory = seeded.slice(-TIMED_HISTORY_CAP);
+  return { timedHistory, timedBest: bestOf(timedHistory), timedRuns: timedHistory.length };
 }
 
 export function loadStats(): Stats {
@@ -166,13 +190,29 @@ export function applyPeg(stats: Stats, position: number, value: string): Stats {
 }
 
 // Record a finished timed run. `avgSeconds` is total time / cards found.
-// Keeps the lowest average as the personal best.
 export function applyTimedRun(stats: Stats, avgSeconds: number): Stats {
-  const best = stats.timedBest === null ? avgSeconds : Math.min(stats.timedBest, avgSeconds);
+  const timedHistory = [...stats.timedHistory, { avg: avgSeconds, at: Date.now() }].slice(
+    -TIMED_HISTORY_CAP,
+  );
   return {
     ...stats,
-    timedBest: best,
-    timedRuns: stats.timedRuns + 1,
+    timedHistory,
+    timedBest: bestOf(timedHistory),
+    timedRuns: timedHistory.length,
+    updatedAt: Date.now(),
+  };
+}
+
+// Discard the most recent timed run (e.g. you got distracted mid-run). Best
+// and count are recomputed from what's left.
+export function retireLastTimedRun(stats: Stats): Stats {
+  if (stats.timedHistory.length === 0) return stats;
+  const timedHistory = stats.timedHistory.slice(0, -1);
+  return {
+    ...stats,
+    timedHistory,
+    timedBest: bestOf(timedHistory),
+    timedRuns: timedHistory.length,
     updatedAt: Date.now(),
   };
 }

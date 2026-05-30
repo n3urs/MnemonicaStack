@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { learnedCount, selectSessionCards, type Stats } from "../storage";
 import { PlayingCard } from "../components/PlayingCard";
+import { TimedChart } from "../components/TimedChart";
 
 type Phase = "ready" | "countdown" | "running" | "done";
 
@@ -13,11 +14,13 @@ function fmt(seconds: number): string {
 export function Timed({
   stats,
   onComplete,
+  onRetire,
   onBack,
   onLearn,
 }: {
   stats: Stats;
   onComplete: (avgSeconds: number) => void;
+  onRetire: () => void;
   onBack: () => void;
   onLearn: () => void;
 }) {
@@ -70,6 +73,20 @@ export function Timed({
     setResult(null);
     setCount(3);
     setPhase("countdown");
+  }
+
+  // Bail out of an in-progress run — nothing was recorded, so just reset.
+  function abandonRun() {
+    setResult(null);
+    setPhase("ready");
+  }
+
+  // Throw away the run that just finished (it was already recorded on the way
+  // into the done screen), then return to the start.
+  function discardResult() {
+    onRetire();
+    setResult(null);
+    setPhase("ready");
   }
 
   function foundIt() {
@@ -151,6 +168,7 @@ export function Timed({
                 </>
               )}
             </div>
+            <TimedChart runs={stats.timedHistory} />
             <button type="button" className="btn btn-primary session-begin" onClick={startRun}>
               Start
             </button>
@@ -190,6 +208,7 @@ export function Timed({
             {fmt(result.total)} total for {cards.length} cards
             {!result.isPB && stats.timedBest !== null && ` · best ${fmt(stats.timedBest)}`}
           </p>
+          <TimedChart runs={stats.timedHistory} />
           <div className="session-actions">
             <button type="button" className="btn btn-ghost" onClick={onBack}>
               Done
@@ -198,6 +217,9 @@ export function Timed({
               Go again
             </button>
           </div>
+          <button type="button" className="btn-link timed-discard" onClick={discardResult}>
+            Distracted? Discard this run
+          </button>
         </div>
       </div>
     );
@@ -219,6 +241,16 @@ export function Timed({
           ← Back
         </button>
         <span className="toolbar-spacer" />
+        <button
+          type="button"
+          className="btn-link timed-retire"
+          onClick={(e) => {
+            e.stopPropagation();
+            abandonRun();
+          }}
+        >
+          Retire
+        </button>
       </div>
 
       <div className="timed-run-body">

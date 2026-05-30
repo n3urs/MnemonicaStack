@@ -7,6 +7,7 @@ import {
   defaultStats,
   introduceCard,
   loadStats,
+  retireLastTimedRun,
   saveStats,
   type CardNote,
   type Stats,
@@ -212,6 +213,14 @@ export default function App() {
     });
   }, []);
 
+  const retireTimedRun = useCallback(() => {
+    setStats((prev) => {
+      const next = retireLastTimedRun(prev);
+      saveStats(next);
+      return next;
+    });
+  }, []);
+
   const resetStats = useCallback(() => {
     const fresh = { ...defaultStats(), updatedAt: Date.now() };
     saveStats(fresh);
@@ -295,11 +304,14 @@ export default function App() {
         <Timed
           stats={stats}
           onComplete={recordTimedRun}
+          onRetire={retireTimedRun}
           onBack={goHome}
           onLearn={() => setScreen({ name: "learn" })}
         />
       )}
-      <SoundKey />
+      {/* The sound-key hint is about the Major-system letters — not relevant
+          on the timed screen, where it would also overlap the speed chart. */}
+      {screen.name !== "timed" && <SoundKey />}
     </div>
   );
 }
