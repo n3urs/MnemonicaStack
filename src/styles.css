@@ -1917,9 +1917,29 @@ button {
   color: var(--text-dim);
 }
 
-/* The big Found-it button on the running screen. */
-.timed-found {
-  margin-top: auto;
+/* Running screen — tap anywhere to advance, with a big live clock. */
+.timed-run-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.timed-clock-big {
+  font-family: var(--serif);
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.timed-clock-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
 }
 
 .route-steps {

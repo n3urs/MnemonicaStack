@@ -32,6 +32,7 @@ export function Timed({
   const [result, setResult] = useState<{ total: number; avg: number; isPB: boolean } | null>(null);
 
   const startRef = useRef(0);
+  const lastTapRef = useRef(0);
   const learned = learnedCount(stats);
 
   // Lock scroll during the active run so nothing shifts under the finger.
@@ -84,6 +85,23 @@ export function Timed({
     setPhase("done");
     onComplete(avg);
   }
+
+  // Tap anywhere on the running screen to log the card and show the next. A
+  // short debounce stops an accidental double-tap from skipping a card. The
+  // Back button stops propagation so it doesn't count as a "found it".
+  const foundRef = useRef(foundIt);
+  foundRef.current = foundIt;
+  useEffect(() => {
+    if (phase !== "running") return;
+    const handler = () => {
+      const t = Date.now();
+      if (t - lastTapRef.current < 250) return;
+      lastTapRef.current = t;
+      foundRef.current();
+    };
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [phase]);
 
   const toolbar = (
     <div className="toolbar">
@@ -190,30 +208,29 @@ export function Timed({
   return (
     <div className="screen timed-screen timed-running">
       <div className="toolbar">
-        <button type="button" className="btn-link" onClick={onBack}>
+        <button
+          type="button"
+          className="btn-link"
+          onClick={(e) => {
+            e.stopPropagation();
+            onBack();
+          }}
+        >
           ← Back
         </button>
-        <div className="toolbar-stat">
-          <span className="ts-value">{elapsed.toFixed(1)}s</span>
-          <span className="ts-label">Clock</span>
-        </div>
-        <div className="toolbar-stat">
-          <span className="ts-value">
-            {idx + 1} / {cards.length}
-          </span>
-          <span className="ts-label">Card</span>
-        </div>
+        <span className="toolbar-spacer" />
       </div>
 
-      <p className="prompt-text">Cut to this card.</p>
-
-      <div className="stimulus" key={idx}>
-        <PlayingCard card={cards[idx]} size="large" />
+      <div className="timed-run-body">
+        <span className="timed-clock-big">{elapsed.toFixed(1)}s</span>
+        <span className="timed-clock-count">
+          card {idx + 1} / {cards.length}
+        </span>
+        <div className="stimulus" key={idx}>
+          <PlayingCard card={cards[idx]} size="large" />
+        </div>
+        <p className="tap-hint">tap anywhere for the next</p>
       </div>
-
-      <button type="button" className="btn btn-primary next-btn timed-found" onClick={foundIt}>
-        {idx < cards.length - 1 ? "Found it →" : "Found it — stop clock"}
-      </button>
     </div>
   );
 }
