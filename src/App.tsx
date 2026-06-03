@@ -229,11 +229,13 @@ export default function App() {
 
   const goHome = () => setScreen({ name: "home" });
 
-  // Lock scroll on screens whose content fits the viewport — kills the small
-  // "scroll into nothing" feel on the drill and learn screens. The control and
-  // session screens manage their own lock (they have scrollable sub-views).
+  // Lock scroll only on the drill, whose content is sized to fit the viewport.
+  // NOT the learn screen — it has text fields and an expandable help section,
+  // so it's taller than the viewport, and locking it traps you below the fold
+  // when the keyboard scrolls a field into view (can't reach Back). The timed
+  // and session screens manage their own lock for their fitted sub-views.
   useEffect(() => {
-    const noScroll = screen.name === "drill" || screen.name === "learn";
+    const noScroll = screen.name === "drill";
     document.body.classList.toggle("no-scroll", noScroll);
     return () => document.body.classList.remove("no-scroll");
   }, [screen]);
