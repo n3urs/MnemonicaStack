@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { selectLearnedCard, type Stats } from "../storage";
-import { cardName, positionOf } from "../stack";
+import { cardAt, cardName, positionOf } from "../stack";
 import { PlayingCard } from "../components/PlayingCard";
 import { NumberGrid } from "../components/AnswerGrids";
 import { celebrate } from "../haptics";
@@ -124,6 +124,12 @@ export function Acaan({
         : { text: "Not quite", cls: "is-wrong" };
   const diff = q.position - q.number; // may be negative
   const bottomCut = (52 - q.cut) % 52;
+  // After cutting `cut` cards from the top to the bottom, the deck reads
+  // C+1, C+2, …, 52, 1, …, C. So the new top is stack position C+1 and the new
+  // bottom (the card you can glimpse to check) is stack position C — or 52 if
+  // there was no cut.
+  const topCard = cardAt(q.cut + 1);
+  const bottomCard = cardAt(q.cut === 0 ? 52 : q.cut);
 
   return (
     <div className="screen drill acaan-screen">
@@ -184,6 +190,17 @@ export function Acaan({
             {q.cut > 26 && (
               <span className="acaan-answer-alt">or cut {bottomCut} from the bottom</span>
             )}
+          </div>
+
+          <div className="acaan-peek">
+            <div className="acaan-peek-item">
+              <PlayingCard card={topCard} size="small" />
+              <span className="acaan-peek-label">new top</span>
+            </div>
+            <div className="acaan-peek-item is-key">
+              <PlayingCard card={bottomCard} size="small" />
+              <span className="acaan-peek-label">bottom — peek to check</span>
+            </div>
           </div>
 
           <div className="acaan-working">

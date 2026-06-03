@@ -2134,6 +2134,36 @@ button {
   font-size: 11px;
   color: var(--text-dim);
 }
+.acaan-peek {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+}
+.acaan-peek-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.6;
+}
+.acaan-peek-item.is-key {
+  opacity: 1;
+}
+.acaan-peek-item .playing-card {
+  width: 58px;
+}
+.acaan-peek-item.is-key .playing-card {
+  width: 66px;
+}
+.acaan-peek-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  color: var(--text-dim);
+}
+.acaan-peek-item.is-key .acaan-peek-label {
+  color: var(--gold-bright);
+}
 .acaan-working {
   display: flex;
   flex-direction: column;
