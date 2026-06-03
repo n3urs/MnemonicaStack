@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { selectLearnedCard, type Stats } from "../storage";
+import { isWeakCard, learnedCount, selectLearnedCard, type Stats } from "../storage";
 import { buildQuestion, needsSecondCard, type Mode, type Question } from "../quiz";
 import { cardAt, cardName, positionOf } from "../stack";
 import { defaultCardImage, positionPeg } from "../mnemonics";
@@ -11,6 +11,25 @@ import { ding, dud } from "../audio";
 import { cancelSpeech, speak } from "../speech";
 
 type Phase = "answering" | "answered" | "revealed";
+
+// Which learned cards the drill draws from. Default is "all".
+type Filter =
+  | { type: "all" }
+  | { type: "weak" }
+  | { type: "range"; lo: number; hi: number };
+
+const RANGE_PRESETS: { lo: number; hi: number }[] = [
+  { lo: 1, hi: 13 },
+  { lo: 14, hi: 26 },
+  { lo: 27, hi: 39 },
+  { lo: 40, hi: 52 },
+];
+
+function filterLabel(f: Filter): string {
+  if (f.type === "all") return "All cards";
+  if (f.type === "weak") return "Weak cards";
+  return `Pos ${f.lo}–${f.hi}`;
+}
 
 function Stimulus({
   kind,
@@ -44,18 +63,44 @@ export function Drill({
   statsRef.current = stats;
   const lastRef = useRef<string | undefined>(undefined);
 
+  const [filter, setFilter] = useState<Filter>({ type: "all" });
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  function poolPredicate(): ((c: string) => boolean) | undefined {
+    const f = filterRef.current;
+    if (f.type === "all") return undefined;
+    if (f.type === "weak") return (c) => isWeakCard(statsRef.current, c);
+    return (c) => {
+      const p = positionOf(c);
+      return p >= f.lo && p <= f.hi;
+    };
+  }
+
   function pick(): Question | null {
-    const focus = selectLearnedCard(statsRef.current, lastRef.current);
+    const pred = poolPredicate();
+    const focus = selectLearnedCard(statsRef.current, lastRef.current, pred);
     if (!focus) return null;
     lastRef.current = focus;
     if (needsSecondCard(mode)) {
-      // Distance needs a second, distinct learned card. If only one card is
-      // learned there's nothing to measure against — bail to the empty state.
-      const second = selectLearnedCard(statsRef.current, focus);
+      // Distance needs a second, distinct learned card from the same pool. If
+      // the filter leaves fewer than two, bail to the empty state.
+      const second = selectLearnedCard(statsRef.current, focus, pred);
       if (!second || second === focus) return null;
       return buildQuestion(mode, focus, second);
     }
     return buildQuestion(mode, focus);
+  }
+
+  function changeFilter(f: Filter) {
+    filterRef.current = f; // sync so the next pick() uses it immediately
+    setFilter(f);
+    setQuestion(pick());
+    setResult(null);
+    setPhase("answering");
+    setRound((r) => r + 1);
+    setFilterOpen(false);
   }
 
   const [question, setQuestion] = useState<Question | null>(pick);
@@ -160,13 +205,27 @@ export function Drill({
             <span className="orn-red">♦</span>
             <span className="orn-black">♣</span>
           </div>
-          <p className="empty-drill-text">
-            You haven't learned any cards yet. Drills only quiz cards you've studied, so start
-            in the learn screen and come back once you have a few.
-          </p>
-          <button type="button" className="btn btn-primary" onClick={onLearn}>
-            Go to learn
-          </button>
+          {learnedCount(stats) === 0 ? (
+            <>
+              <p className="empty-drill-text">
+                You haven't learned any cards yet. Drills only quiz cards you've studied, so start
+                in the learn screen and come back once you have a few.
+              </p>
+              <button type="button" className="btn btn-primary" onClick={onLearn}>
+                Go to learn
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="empty-drill-text">
+                No learned cards match the “{filterLabel(filter)}” filter
+                {mode === "distance" ? " (this mode needs at least two)" : ""}.
+              </p>
+              <button type="button" className="btn btn-primary" onClick={() => changeFilter({ type: "all" })}>
+                Show all cards
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -206,19 +265,24 @@ export function Drill({
 
       {phase === "answering" ? (
         <>
-          {question.promptKind === "card" && !question.promptCardB && (
-            <button
-              type="button"
-              className="prompt-toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (audioPrompt) cancelSpeech();
-                setAudioPrompt((v) => !v);
-              }}
-            >
-              {audioPrompt ? "switch to shown" : "switch to spoken"}
+          <div className="drill-controls">
+            <button type="button" className="filter-pill" onClick={() => setFilterOpen(true)}>
+              ⛃ {filterLabel(filter)}
             </button>
-          )}
+            {question.promptKind === "card" && !question.promptCardB && (
+              <button
+                type="button"
+                className="prompt-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (audioPrompt) cancelSpeech();
+                  setAudioPrompt((v) => !v);
+                }}
+              >
+                {audioPrompt ? "switch to shown" : "switch to spoken"}
+              </button>
+            )}
+          </div>
           <div className="stimulus" key={round}>
             {question.promptCardB ? (
               <div className="stimulus-pair">
@@ -332,6 +396,47 @@ export function Drill({
             {hookLink && <span className="reveal-hook-link">"{hookLink}"</span>}
           </div>
           <p className="tap-hint">Tap anywhere to continue</p>
+        </div>
+      )}
+
+      {filterOpen && (
+        <div className="filter-overlay" onClick={() => setFilterOpen(false)}>
+          <div className="filter-panel" onClick={(e) => e.stopPropagation()}>
+            <span className="filter-title">Show which cards?</span>
+            <button
+              type="button"
+              className={`filter-option ${filter.type === "all" ? "is-active" : ""}`}
+              onClick={() => changeFilter({ type: "all" })}
+            >
+              All cards
+            </button>
+            <button
+              type="button"
+              className={`filter-option ${filter.type === "weak" ? "is-active" : ""}`}
+              onClick={() => changeFilter({ type: "weak" })}
+            >
+              Weak cards
+            </button>
+            <span className="filter-subtitle">By position</span>
+            <div className="filter-ranges">
+              {RANGE_PRESETS.map((r) => {
+                const active = filter.type === "range" && filter.lo === r.lo && filter.hi === r.hi;
+                return (
+                  <button
+                    key={`${r.lo}-${r.hi}`}
+                    type="button"
+                    className={`filter-range ${active ? "is-active" : ""}`}
+                    onClick={() => changeFilter({ type: "range", lo: r.lo, hi: r.hi })}
+                  >
+                    {r.lo}–{r.hi}
+                  </button>
+                );
+              })}
+            </div>
+            <button type="button" className="btn btn-ghost filter-close" onClick={() => setFilterOpen(false)}>
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>

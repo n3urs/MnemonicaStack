@@ -8,6 +8,7 @@ export function Home({
   onLearn,
   onStart,
   onSession,
+  onAcaan,
   onStats,
   onReference,
   onSetup,
@@ -20,6 +21,7 @@ export function Home({
   onLearn: () => void;
   onStart: (mode: Mode) => void;
   onSession: () => void;
+  onAcaan: () => void;
   onStats: () => void;
   onReference: () => void;
   onSetup: () => void;
@@ -87,6 +89,10 @@ export function Home({
         <button type="button" className="mode-button" onClick={onTimed}>
           <span className="mode-name">Timed run</span>
           <span className="mode-desc">Race the clock cutting to 5 cards; beat your best time.</span>
+        </button>
+        <button type="button" className="mode-button" onClick={onAcaan}>
+          <span className="mode-name">ACAAN cut</span>
+          <span className="mode-desc">Work out the cut so a named card deals to any number.</span>
         </button>
       </div>
 

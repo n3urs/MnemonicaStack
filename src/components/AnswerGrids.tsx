@@ -6,13 +6,15 @@ const GRID_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", 
 export function NumberGrid({
   onSelect,
   count = 52,
+  start = 1,
 }: {
   onSelect: (n: number) => void;
   count?: number;
+  start?: number;
 }) {
   return (
     <div className="number-grid">
-      {Array.from({ length: count }, (_, i) => i + 1).map((n) => (
+      {Array.from({ length: count }, (_, i) => i + start).map((n) => (
         <button key={n} type="button" className="grid-cell num-cell" onClick={() => onSelect(n)}>
           {n}
         </button>

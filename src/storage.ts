@@ -225,6 +225,19 @@ export function learnedCount(stats: Stats): number {
   return Object.values(stats.learn).filter((l) => l.introduced).length;
 }
 
+// A learned card counts as "weak" if it's in a low Leitner box, has missed
+// recently, or has a poor hit rate once it's been seen a few times.
+export function isWeakCard(stats: Stats, card: string): boolean {
+  const ln = stats.learn[card];
+  if (!ln?.introduced) return false;
+  const s = stats.cards[card];
+  const recentWrong = s ? s.recent.filter((r) => r === false).length : 0;
+  if (ln.box <= 2) return true;
+  if (recentWrong > 0) return true;
+  if (s && s.seen >= 3 && s.correct / s.seen < 0.7) return true;
+  return false;
+}
+
 // Higher weight => the card surfaces more often.
 // weight = 1 + (recent wrong x 2) + (2 if seen fewer than 5 times); unseen = 5.
 export function cardWeight(stats: Stats, card: string): number {
@@ -247,11 +260,16 @@ function weightedPick(cards: string[], weightOf: (card: string) => number): stri
   return cards[cards.length - 1];
 }
 
-// Pick the next card to drill, restricted to cards the user has learned.
-// Returns null when nothing has been learned yet. Due cards and cards in lower
-// Leitner boxes are favoured, on top of the recent-wrong weighting.
-export function selectLearnedCard(stats: Stats, exclude?: string): string | null {
-  const pool = STACK.filter((c) => stats.learn[c]?.introduced);
+// Pick the next card to drill, restricted to cards the user has learned (and,
+// optionally, to those passing `inPool` — used by the drill filters). Returns
+// null when nothing matches. Due cards and cards in lower Leitner boxes are
+// favoured, on top of the recent-wrong weighting.
+export function selectLearnedCard(
+  stats: Stats,
+  exclude?: string,
+  inPool?: (card: string) => boolean,
+): string | null {
+  const pool = STACK.filter((c) => stats.learn[c]?.introduced && (!inPool || inPool(c)));
   if (pool.length === 0) return null;
   let candidates = exclude ? pool.filter((c) => c !== exclude) : pool;
   if (candidates.length === 0) candidates = pool;

@@ -31,6 +31,7 @@ import { Sync } from "./screens/Sync";
 import { Toolkit } from "./screens/Toolkit";
 import { Session } from "./screens/Session";
 import { Timed } from "./screens/Timed";
+import { Acaan } from "./screens/Acaan";
 import { SoundKey } from "./components/SoundKey";
 
 type Screen =
@@ -44,7 +45,8 @@ type Screen =
   | { name: "insights" }
   | { name: "sync" }
   | { name: "toolkit" }
-  | { name: "timed" };
+  | { name: "timed" }
+  | { name: "acaan" };
 
 export type SyncStatus = { busy: boolean; message: string };
 
@@ -235,7 +237,7 @@ export default function App() {
   // when the keyboard scrolls a field into view (can't reach Back). The timed
   // and session screens manage their own lock for their fitted sub-views.
   useEffect(() => {
-    const noScroll = screen.name === "drill";
+    const noScroll = screen.name === "drill" || screen.name === "acaan";
     document.body.classList.toggle("no-scroll", noScroll);
     return () => document.body.classList.remove("no-scroll");
   }, [screen]);
@@ -248,6 +250,7 @@ export default function App() {
           onLearn={() => setScreen({ name: "learn" })}
           onStart={(mode) => setScreen({ name: "drill", mode })}
           onSession={() => setScreen({ name: "session" })}
+          onAcaan={() => setScreen({ name: "acaan" })}
           onStats={() => setScreen({ name: "stats" })}
           onReference={() => setScreen({ name: "reference" })}
           onSetup={() => setScreen({ name: "setup" })}
@@ -300,6 +303,9 @@ export default function App() {
           onPull={forcePull}
           onBack={goHome}
         />
+      )}
+      {screen.name === "acaan" && (
+        <Acaan stats={stats} onBack={goHome} onLearn={() => setScreen({ name: "learn" })} />
       )}
       {screen.name === "toolkit" && <Toolkit onBack={goHome} />}
       {screen.name === "timed" && (
