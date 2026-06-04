@@ -1734,42 +1734,6 @@ button {
    v2 — sessions, control trainer, toolkit, distance, ref stats
    ============================================================ */
 
-/* ---------- Home: Today's session CTA ---------- */
-.session-cta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 100%;
-  margin-top: 12px;
-  padding: 14px 18px;
-  text-align: left;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(212, 184, 120, 0.1), rgba(184, 153, 104, 0.02));
-  color: var(--text);
-  cursor: pointer;
-  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
-}
-.session-cta:hover {
-  transform: translateY(-2px);
-  border-color: var(--gold);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
-}
-.session-cta:active {
-  transform: translateY(0) scale(0.995);
-}
-.session-cta-name {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: 22px;
-  color: var(--gold-bright);
-}
-.session-cta-desc {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
 /* ---------- Drill: distance (two-card) layouts ---------- */
 .stimulus-pair {
   display: flex;
@@ -2338,14 +2302,7 @@ body.no-scroll .drill .result {
   color: var(--gold-bright);
 }
 
-/* ---------- Today's session ---------- */
-.session-config,
-.session-summary,
-.session-done {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* Shared by the timed-run screens (ready / result). */
 .session-sub {
   margin: 0;
   font-family: var(--mono);
@@ -2354,86 +2311,9 @@ body.no-scroll .drill .result {
   color: var(--text-dim);
   text-align: center;
 }
-.size-row {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-.size-btn {
-  width: 64px;
-  height: 64px;
-  font-family: var(--serif);
-  font-size: 26px;
-  border-radius: 12px;
-  border: 1px solid var(--line-strong);
-  background: rgba(245, 239, 224, 0.03);
-  color: var(--text);
-  cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-}
-.size-btn.is-active {
-  border-color: var(--gold);
-  background: var(--gold);
-  color: var(--bg);
-  font-weight: 700;
-}
 .session-begin {
   align-self: center;
   min-width: 180px;
-}
-.session-score {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.session-score-big {
-  font-family: var(--serif);
-  font-size: 46px;
-  font-weight: 700;
-  color: var(--gold-bright);
-  line-height: 1;
-}
-.session-score-label {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: var(--text-dim);
-}
-.session-perfect {
-  font-size: 15px;
-  color: var(--text);
-}
-.session-missed {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.session-missed-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-}
-.session-missed-row .playing-card {
-  width: 44px;
-}
-.session-missed-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.session-missed-pos {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--gold);
-}
-.session-missed-hook {
-  font-family: var(--serif);
-  font-size: 17px;
-  color: var(--text);
 }
 .session-actions {
   display: flex;
@@ -2442,22 +2322,6 @@ body.no-scroll .drill .result {
 }
 .session-actions .btn {
   flex: 1;
-}
-.session-done {
-  align-items: center;
-  text-align: center;
-  margin-top: 30px;
-}
-.session-done-mark {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 2px solid var(--gold);
-  color: var(--gold-bright);
-  font-size: 32px;
 }
 
 /* ---------- Reference: struggling badge + stat detail ---------- */

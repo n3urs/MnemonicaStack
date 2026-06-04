@@ -8,7 +8,6 @@ export function Home({
   stats,
   onLearn,
   onStart,
-  onSession,
   onAcaan,
   onStats,
   onReference,
@@ -21,7 +20,6 @@ export function Home({
   stats: Stats;
   onLearn: () => void;
   onStart: (mode: Mode) => void;
-  onSession: () => void;
   onAcaan: () => void;
   onStats: () => void;
   onReference: () => void;
@@ -72,13 +70,6 @@ export function Home({
           <span style={{ width: `${(learned / 52) * 100}%` }} />
         </span>
       </button>
-
-      {learned > 0 && (
-        <button type="button" className="session-cta" onClick={onSession}>
-          <span className="session-cta-name">Today's session →</span>
-          <span className="session-cta-desc">A focused run, then drill whatever you miss.</span>
-        </button>
-      )}
 
       <p className="eyebrow">Drills</p>
       <div className="mode-list">

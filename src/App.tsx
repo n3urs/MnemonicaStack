@@ -29,7 +29,6 @@ import { Setup } from "./screens/Setup";
 import { Insights } from "./screens/Insights";
 import { Sync } from "./screens/Sync";
 import { Toolkit } from "./screens/Toolkit";
-import { Session } from "./screens/Session";
 import { Timed } from "./screens/Timed";
 import { Acaan } from "./screens/Acaan";
 import { SoundKey } from "./components/SoundKey";
@@ -38,7 +37,6 @@ type Screen =
   | { name: "home" }
   | { name: "learn" }
   | { name: "drill"; mode: Mode }
-  | { name: "session" }
   | { name: "stats" }
   | { name: "reference" }
   | { name: "setup" }
@@ -235,7 +233,7 @@ export default function App() {
   // NOT the learn screen — it has text fields and an expandable help section,
   // so it's taller than the viewport, and locking it traps you below the fold
   // when the keyboard scrolls a field into view (can't reach Back). The timed
-  // and session screens manage their own lock for their fitted sub-views.
+  // screen manages its own lock for its fitted sub-views.
   useEffect(() => {
     const noScroll = screen.name === "drill" || screen.name === "acaan";
     document.body.classList.toggle("no-scroll", noScroll);
@@ -249,7 +247,6 @@ export default function App() {
           stats={stats}
           onLearn={() => setScreen({ name: "learn" })}
           onStart={(mode) => setScreen({ name: "drill", mode })}
-          onSession={() => setScreen({ name: "session" })}
           onAcaan={() => setScreen({ name: "acaan" })}
           onStats={() => setScreen({ name: "stats" })}
           onReference={() => setScreen({ name: "reference" })}
@@ -272,14 +269,6 @@ export default function App() {
       {screen.name === "drill" && (
         <Drill
           mode={screen.mode}
-          stats={stats}
-          onRecord={recordAnswer}
-          onBack={goHome}
-          onLearn={() => setScreen({ name: "learn" })}
-        />
-      )}
-      {screen.name === "session" && (
-        <Session
           stats={stats}
           onRecord={recordAnswer}
           onBack={goHome}
