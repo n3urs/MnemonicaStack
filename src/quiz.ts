@@ -1,25 +1,6 @@
 import { nextCard, positionOf, prevCard } from "./stack";
 
-export type Mode =
-  | "cardToPosition"
-  | "positionToCard"
-  | "sequence"
-  | "reverseSequence"
-  | "distance";
-
-export interface ModeInfo {
-  id: Mode;
-  name: string;
-  description: string;
-}
-
-export const MODES: ModeInfo[] = [
-  { id: "cardToPosition", name: "Card → position", description: "See a card, recall its position in the stack." },
-  { id: "positionToCard", name: "Position → card", description: "See a position, recall the card that lives there." },
-  { id: "sequence", name: "What comes next", description: "See a card, recall the one that follows it." },
-  { id: "reverseSequence", name: "What comes before", description: "See a card, recall the one just before it." },
-  { id: "distance", name: "How far apart", description: "See two cards, count the gap between their positions." },
-];
+export type Mode = "cardToPosition" | "positionToCard" | "neighbour" | "distance";
 
 // Modes that need a second learned card drawn alongside the focus card.
 export function needsSecondCard(mode: Mode): boolean {
@@ -35,6 +16,7 @@ export interface Question {
   promptCardB: string | null; // second card, for the distance mode
   promptPosition: number | null;
   promptText: string;
+  direction: "next" | "before" | null; // for the neighbour mode's big label
   answerNumber: number | null;
   answerCard: string | null;
 }
@@ -46,6 +28,7 @@ export function buildQuestion(mode: Mode, focusCard: string, secondCard?: string
     promptCard: null as string | null,
     promptCardB: null as string | null,
     promptPosition: null as number | null,
+    direction: null as "next" | "before" | null,
     answerNumber: null as number | null,
     answerCard: null as string | null,
   };
@@ -68,24 +51,20 @@ export function buildQuestion(mode: Mode, focusCard: string, secondCard?: string
         promptText: "Which card sits at this position?",
         answerCard: focusCard,
       };
-    case "sequence":
+    case "neighbour": {
+      // Randomly ask for the card before or after — the direction is shown in
+      // big text so it's unambiguous.
+      const before = Math.random() < 0.5;
       return {
         ...base,
         inputKind: "card",
         promptKind: "card",
         promptCard: focusCard,
-        promptText: "Which card comes next?",
-        answerCard: nextCard(focusCard),
+        direction: before ? "before" : "next",
+        promptText: before ? "Which card comes before?" : "Which card comes next?",
+        answerCard: before ? prevCard(focusCard) : nextCard(focusCard),
       };
-    case "reverseSequence":
-      return {
-        ...base,
-        inputKind: "card",
-        promptKind: "card",
-        promptCard: focusCard,
-        promptText: "Which card comes before?",
-        answerCard: prevCard(focusCard),
-      };
+    }
     case "distance": {
       // secondCard is supplied by the caller (a second learned card). Fall
       // back to the neighbour if somehow missing, so the type stays total.

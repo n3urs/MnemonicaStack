@@ -286,7 +286,16 @@ export function Drill({
         </div>
       </div>
 
-      <p className="prompt-text">{question.promptText}</p>
+      {question.direction ? (
+        <div className="direction-prompt">
+          <span className="direction-badge">{question.direction === "next" ? "NEXT" : "BEFORE"}</span>
+          <span className="direction-sub">
+            tap the card that comes {question.direction === "next" ? "after" : "before"} this one
+          </span>
+        </div>
+      ) : (
+        <p className="prompt-text">{question.promptText}</p>
+      )}
 
       {phase === "answering" ? (
         <>

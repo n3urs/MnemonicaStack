@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { learnedCount, type Stats } from "../storage";
-import { MODES, type Mode } from "../quiz";
+import { type Mode } from "../quiz";
 import { MetricBox } from "../components/MetricBox";
 import { Ornament } from "../components/Ornament";
 
@@ -30,6 +31,7 @@ export function Home({
   onToolkit: () => void;
   onTimed: () => void;
 }) {
+  const [posChooser, setPosChooser] = useState(false);
   const accuracy =
     stats.totalAnswered === 0 ? "—" : `${Math.round((stats.totalCorrect / stats.totalAnswered) * 100)}%`;
   const learned = learnedCount(stats);
@@ -80,12 +82,18 @@ export function Home({
 
       <p className="eyebrow">Drills</p>
       <div className="mode-list">
-        {MODES.map((m) => (
-          <button key={m.id} type="button" className="mode-button" onClick={() => onStart(m.id)}>
-            <span className="mode-name">{m.name}</span>
-            <span className="mode-desc">{m.description}</span>
-          </button>
-        ))}
+        <button type="button" className="mode-button" onClick={() => setPosChooser(true)}>
+          <span className="mode-name">Positions</span>
+          <span className="mode-desc">Card ↔ position — pick which way after you tap.</span>
+        </button>
+        <button type="button" className="mode-button" onClick={() => onStart("neighbour")}>
+          <span className="mode-name">Next or before</span>
+          <span className="mode-desc">See a card, name the one just before or after it.</span>
+        </button>
+        <button type="button" className="mode-button" onClick={() => onStart("distance")}>
+          <span className="mode-name">How far apart</span>
+          <span className="mode-desc">See two cards, count the gap between them.</span>
+        </button>
         <button type="button" className="mode-button" onClick={onTimed}>
           <span className="mode-name">Timed run</span>
           <span className="mode-desc">Race the clock cutting to 5 cards; beat your best time.</span>
@@ -118,6 +126,23 @@ export function Home({
           Cloud sync
         </button>
       </div>
+
+      {posChooser && (
+        <div className="filter-overlay" onClick={() => setPosChooser(false)}>
+          <div className="filter-panel" onClick={(e) => e.stopPropagation()}>
+            <span className="filter-title">Positions — which way?</span>
+            <button type="button" className="filter-option" onClick={() => onStart("cardToPosition")}>
+              Card → position
+            </button>
+            <button type="button" className="filter-option" onClick={() => onStart("positionToCard")}>
+              Position → card
+            </button>
+            <button type="button" className="btn btn-ghost filter-close" onClick={() => setPosChooser(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
