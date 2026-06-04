@@ -33,6 +33,9 @@ export interface TimedRun {
   at: number; // ms epoch
 }
 
+// The two timed modes — cutting to a card vs. naming its position.
+export type TimedMode = "cut" | "position";
+
 export interface Stats {
   totalAnswered: number;
   totalCorrect: number;
@@ -44,9 +47,12 @@ export interface Stats {
   learn: Record<string, LearnCard>;
   notes: Record<string, CardNote>;
   pegs: Record<string, string>; // position (as string) -> user's peg override
-  timedHistory: TimedRun[]; // every completed timed run, oldest → newest (capped)
-  timedBest: number | null; // best (lowest) average seconds per card — derived from history
-  timedRuns: number; // how many timed runs completed — derived from history
+  timedHistory: TimedRun[]; // "cut" timed runs, oldest → newest (capped)
+  timedBest: number | null; // best (lowest) average seconds per card — "cut" mode
+  timedRuns: number; // how many "cut" timed runs completed — derived from history
+  timedPosHistory: TimedRun[]; // "position" (recall-speed) timed runs
+  timedPosBest: number | null; // best average seconds per card — "position" mode
+  timedPosRuns: number; // how many "position" timed runs completed
   updatedAt: number; // ms epoch of last local change, for sync conflict resolution
 }
 
@@ -71,6 +77,9 @@ export function defaultStats(): Stats {
     timedHistory: [],
     timedBest: null,
     timedRuns: 0,
+    timedPosHistory: [],
+    timedPosBest: null,
+    timedPosRuns: 0,
     updatedAt: 0,
   };
 }
@@ -91,7 +100,20 @@ export function normalizeStats(raw: Partial<Stats> | null | undefined): Stats {
     notes: r.notes ?? {},
     pegs: r.pegs ?? {},
     ...timedFields(r),
+    ...posTimedFields(r),
     updatedAt: r.updatedAt ?? 0,
+  };
+}
+
+// Normalise the "position" timed fields (no legacy migration — this mode is new).
+function posTimedFields(
+  r: Partial<Stats>,
+): Pick<Stats, "timedPosHistory" | "timedPosBest" | "timedPosRuns"> {
+  const timedPosHistory = (r.timedPosHistory ?? []).slice(-TIMED_HISTORY_CAP);
+  return {
+    timedPosHistory,
+    timedPosBest: bestOf(timedPosHistory),
+    timedPosRuns: timedPosHistory.length,
   };
 }
 
@@ -237,32 +259,27 @@ export function applyPeg(stats: Stats, position: number, value: string): Stats {
   return { ...stats, pegs: { ...stats.pegs, [position]: value }, updatedAt: Date.now() };
 }
 
-// Record a finished timed run. `avgSeconds` is total time / cards found.
-export function applyTimedRun(stats: Stats, avgSeconds: number): Stats {
-  const timedHistory = [...stats.timedHistory, { avg: avgSeconds, at: Date.now() }].slice(
-    -TIMED_HISTORY_CAP,
-  );
-  return {
-    ...stats,
-    timedHistory,
-    timedBest: bestOf(timedHistory),
-    timedRuns: timedHistory.length,
-    updatedAt: Date.now(),
-  };
+// Record a finished timed run. `avgSeconds` is total time / cards.
+export function applyTimedRun(stats: Stats, avgSeconds: number, mode: TimedMode = "cut"): Stats {
+  if (mode === "position") {
+    const h = [...stats.timedPosHistory, { avg: avgSeconds, at: Date.now() }].slice(-TIMED_HISTORY_CAP);
+    return { ...stats, timedPosHistory: h, timedPosBest: bestOf(h), timedPosRuns: h.length, updatedAt: Date.now() };
+  }
+  const h = [...stats.timedHistory, { avg: avgSeconds, at: Date.now() }].slice(-TIMED_HISTORY_CAP);
+  return { ...stats, timedHistory: h, timedBest: bestOf(h), timedRuns: h.length, updatedAt: Date.now() };
 }
 
 // Discard the most recent timed run (e.g. you got distracted mid-run). Best
 // and count are recomputed from what's left.
-export function retireLastTimedRun(stats: Stats): Stats {
+export function retireLastTimedRun(stats: Stats, mode: TimedMode = "cut"): Stats {
+  if (mode === "position") {
+    if (stats.timedPosHistory.length === 0) return stats;
+    const h = stats.timedPosHistory.slice(0, -1);
+    return { ...stats, timedPosHistory: h, timedPosBest: bestOf(h), timedPosRuns: h.length, updatedAt: Date.now() };
+  }
   if (stats.timedHistory.length === 0) return stats;
-  const timedHistory = stats.timedHistory.slice(0, -1);
-  return {
-    ...stats,
-    timedHistory,
-    timedBest: bestOf(timedHistory),
-    timedRuns: timedHistory.length,
-    updatedAt: Date.now(),
-  };
+  const h = stats.timedHistory.slice(0, -1);
+  return { ...stats, timedHistory: h, timedBest: bestOf(h), timedRuns: h.length, updatedAt: Date.now() };
 }
 
 export function isLearned(stats: Stats, card: string): boolean {

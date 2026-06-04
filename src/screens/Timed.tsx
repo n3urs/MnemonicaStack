@@ -1,32 +1,39 @@
 import { useEffect, useRef, useState } from "react";
-import { learnedCount, selectSessionCards, type Stats } from "../storage";
-import { countBeep, goBeep, primeAudio } from "../audio";
+import { learnedCount, selectSessionCards, type Stats, type TimedMode } from "../storage";
+import { positionOf } from "../stack";
+import { countBeep, dud, goBeep, primeAudio } from "../audio";
 import { PlayingCard } from "../components/PlayingCard";
+import { NumberGrid } from "../components/AnswerGrids";
 import { TimedChart } from "../components/TimedChart";
 
 type Phase = "ready" | "countdown" | "running" | "done";
-
-const RUN_SIZE = 5;
 
 function fmt(seconds: number): string {
   return `${seconds.toFixed(1)}s`;
 }
 
 export function Timed({
+  mode,
   stats,
   onComplete,
   onRetire,
   onBack,
   onLearn,
 }: {
+  mode: TimedMode;
   stats: Stats;
-  onComplete: (avgSeconds: number) => void;
-  onRetire: () => void;
+  onComplete: (avgSeconds: number, mode: TimedMode) => void;
+  onRetire: (mode: TimedMode) => void;
   onBack: () => void;
   onLearn: () => void;
 }) {
   const statsRef = useRef(stats);
   statsRef.current = stats;
+
+  const isPosition = mode === "position";
+  const runSize = isPosition ? 10 : 5;
+  const best = isPosition ? stats.timedPosBest : stats.timedBest;
+  const history = isPosition ? stats.timedPosHistory : stats.timedHistory;
 
   const [phase, setPhase] = useState<Phase>("ready");
   const [cards, setCards] = useState<string[]>([]);
@@ -46,8 +53,7 @@ export function Timed({
     return () => document.body.classList.remove("no-scroll");
   }, [phase]);
 
-  // Countdown 3 → 2 → 1 → go, with Formula-One-style beeps: a beep on each
-  // number, then a higher "lights out" tone as the run starts.
+  // Countdown 3 → 2 → 1 → go, with Formula-One-style beeps.
   useEffect(() => {
     if (phase !== "countdown") return;
     if (count <= 0) {
@@ -71,7 +77,7 @@ export function Timed({
   }, [phase]);
 
   function startRun() {
-    const picked = selectSessionCards(statsRef.current, RUN_SIZE);
+    const picked = selectSessionCards(statsRef.current, runSize);
     if (picked.length === 0) return;
     primeAudio(); // warm the audio context inside this tap so the beeps fire
     setCards(picked);
@@ -80,57 +86,61 @@ export function Timed({
     setPhase("countdown");
   }
 
-  // Bail out of an in-progress run — nothing was recorded, so just reset.
   function abandonRun() {
     setResult(null);
     setPhase("ready");
   }
 
-  // Throw away the run that just finished (it was already recorded on the way
-  // into the done screen), then return to the start.
   function discardResult() {
-    onRetire();
+    onRetire(mode);
     setResult(null);
     setPhase("ready");
   }
 
-  function foundIt() {
-    if (idx < cards.length - 1) {
-      setIdx((i) => i + 1);
-      return;
-    }
+  function finish() {
     const total = (performance.now() - startRef.current) / 1000;
     const avg = total / cards.length;
-    const prevBest = statsRef.current.timedBest;
+    const prevBest = isPosition ? statsRef.current.timedPosBest : statsRef.current.timedBest;
     const isPB = prevBest === null || avg < prevBest;
     setResult({ total, avg, isPB });
     setPhase("done");
-    onComplete(avg);
+    onComplete(avg, mode);
   }
 
-  // Tap anywhere on the running screen to log the card and show the next. A
-  // short debounce stops an accidental double-tap from skipping a card. The
-  // Back button stops propagation so it doesn't count as a "found it".
-  const foundRef = useRef(foundIt);
-  foundRef.current = foundIt;
+  function advance() {
+    if (idx < cards.length - 1) setIdx((i) => i + 1);
+    else finish();
+  }
+
+  // Cut mode: tap anywhere advances. Position mode: tap the position; correct
+  // advances, wrong buzzes and stays.
+  function answerPosition(n: number) {
+    if (n === positionOf(cards[idx])) advance();
+    else dud();
+  }
+
+  // Tap-anywhere listener — cut mode only.
+  const advanceRef = useRef(advance);
+  advanceRef.current = advance;
   useEffect(() => {
-    if (phase !== "running") return;
+    if (phase !== "running" || isPosition) return;
     const handler = () => {
       const t = Date.now();
       if (t - lastTapRef.current < 250) return;
       lastTapRef.current = t;
-      foundRef.current();
+      advanceRef.current();
     };
     window.addEventListener("click", handler);
     return () => window.removeEventListener("click", handler);
-  }, [phase]);
+  }, [phase, isPosition]);
 
+  const title = isPosition ? "Timed recall" : "Timed cut";
   const toolbar = (
     <div className="toolbar">
       <button type="button" className="btn-link" onClick={onBack}>
         ← Back
       </button>
-      <span className="toolbar-title">Timed run</span>
+      <span className="toolbar-title">{title}</span>
       <span className="toolbar-spacer" />
     </div>
   );
@@ -140,7 +150,7 @@ export function Timed({
     return (
       <div className="screen timed-screen">
         {toolbar}
-        {learned < RUN_SIZE ? (
+        {learned < runSize ? (
           <div className="empty-drill">
             <div className="ornament" aria-hidden="true">
               <span className="orn-black">♠</span>
@@ -149,8 +159,7 @@ export function Timed({
               <span className="orn-black">♣</span>
             </div>
             <p className="empty-drill-text">
-              The timed run draws from cards you've learned — study at least {RUN_SIZE} first, then
-              race the clock to cut to them.
+              This timed run draws from cards you've learned — study at least {runSize} first.
             </p>
             <button type="button" className="btn btn-primary" onClick={onLearn}>
               Go to learn
@@ -158,22 +167,27 @@ export function Timed({
           </div>
         ) : (
           <div className="timed-ready">
-            <p className="prompt-text">Cut to {RUN_SIZE} cards as fast as you can.</p>
+            <p className="prompt-text">
+              {isPosition
+                ? `Name the position of ${runSize} cards as fast as you can.`
+                : `Cut to ${runSize} cards as fast as you can.`}
+            </p>
             <p className="session-sub">
-              A card appears, you cut to it in your deck, hit <em>Found it</em>, and the next one
-              shows. The clock runs across all {RUN_SIZE}.
+              {isPosition
+                ? `A card appears, you tap its position. Get it right and the next shows — the clock runs across all ${runSize}.`
+                : `A card appears, you cut to it, hit Found it, and the next shows. The clock runs across all ${runSize}.`}
             </p>
             <div className="timed-best-badge">
-              {stats.timedBest === null ? (
+              {best === null ? (
                 <span className="timed-best-none">No time yet — set the first.</span>
               ) : (
                 <>
-                  <span className="timed-best-value">{fmt(stats.timedBest)}</span>
+                  <span className="timed-best-value">{fmt(best)}</span>
                   <span className="timed-best-label">your best per card</span>
                 </>
               )}
             </div>
-            <TimedChart runs={stats.timedHistory} />
+            <TimedChart runs={history} />
             <button type="button" className="btn btn-primary session-begin" onClick={startRun}>
               Start
             </button>
@@ -211,9 +225,9 @@ export function Timed({
           </div>
           <p className="session-sub">
             {fmt(result.total)} total for {cards.length} cards
-            {!result.isPB && stats.timedBest !== null && ` · best ${fmt(stats.timedBest)}`}
+            {!result.isPB && best !== null && ` · best ${fmt(best)}`}
           </p>
-          <TimedChart runs={stats.timedHistory} />
+          <TimedChart runs={history} />
           <div className="session-actions">
             <button type="button" className="btn btn-ghost" onClick={onBack}>
               Done
@@ -232,6 +246,40 @@ export function Timed({
 
   // ---------- RUNNING ----------
   const elapsed = Math.max(0, (now - startRef.current) / 1000);
+
+  // Position mode: drill-style layout with a number grid (uses the drill's
+  // viewport-fit so the grid stays reachable).
+  if (isPosition) {
+    return (
+      <div className="screen drill timed-pos-run">
+        <div className="toolbar">
+          <button type="button" className="btn-link" onClick={onBack}>
+            ← Back
+          </button>
+          <div className="toolbar-stat">
+            <span className="ts-value">{elapsed.toFixed(1)}s</span>
+            <span className="ts-label">Clock</span>
+          </div>
+          <div className="toolbar-stat">
+            <span className="ts-value">
+              {idx + 1} / {cards.length}
+            </span>
+            <span className="ts-label">Card</span>
+          </div>
+          <button type="button" className="btn-link timed-retire" onClick={abandonRun}>
+            Retire
+          </button>
+        </div>
+        <p className="prompt-text">Which position holds this card?</p>
+        <div className="stimulus" key={idx}>
+          <PlayingCard card={cards[idx]} size="large" />
+        </div>
+        <NumberGrid onSelect={answerPosition} />
+      </div>
+    );
+  }
+
+  // Cut mode: big centred clock, tap anywhere to advance.
   return (
     <div className="screen timed-screen timed-running">
       <div className="toolbar">

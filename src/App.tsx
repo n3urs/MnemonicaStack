@@ -14,6 +14,7 @@ import {
   saveStats,
   type CardNote,
   type Stats,
+  type TimedMode,
 } from "./storage";
 import {
   getSyncCode,
@@ -47,7 +48,7 @@ type Screen =
   | { name: "insights" }
   | { name: "settings" }
   | { name: "toolkit" }
-  | { name: "timed" }
+  | { name: "timed"; mode: TimedMode }
   | { name: "acaan" };
 
 export type SyncStatus = { busy: boolean; message: string };
@@ -216,17 +217,17 @@ export default function App() {
     });
   }, []);
 
-  const recordTimedRun = useCallback((avgSeconds: number) => {
+  const recordTimedRun = useCallback((avgSeconds: number, mode: TimedMode) => {
     setStats((prev) => {
-      const next = applyTimedRun(prev, avgSeconds);
+      const next = applyTimedRun(prev, avgSeconds, mode);
       saveStats(next);
       return next;
     });
   }, []);
 
-  const retireTimedRun = useCallback(() => {
+  const retireTimedRun = useCallback((mode: TimedMode) => {
     setStats((prev) => {
-      const next = retireLastTimedRun(prev);
+      const next = retireLastTimedRun(prev, mode);
       saveStats(next);
       return next;
     });
@@ -265,7 +266,7 @@ export default function App() {
           onInsights={() => setScreen({ name: "insights" })}
           onSettings={() => setScreen({ name: "settings" })}
           onToolkit={() => setScreen({ name: "toolkit" })}
-          onTimed={() => setScreen({ name: "timed" })}
+          onTimed={(mode) => setScreen({ name: "timed", mode })}
         />
       )}
       {screen.name === "learn" && (
@@ -312,6 +313,7 @@ export default function App() {
       {screen.name === "toolkit" && <Toolkit onBack={goHome} />}
       {screen.name === "timed" && (
         <Timed
+          mode={screen.mode}
           stats={stats}
           onComplete={recordTimedRun}
           onRetire={retireTimedRun}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { learnedCount, type Stats } from "../storage";
+import { learnedCount, type Stats, type TimedMode } from "../storage";
 import { type Mode } from "../quiz";
 import { MetricBox } from "../components/MetricBox";
 import { Ornament } from "../components/Ornament";
@@ -27,9 +27,10 @@ export function Home({
   onInsights: () => void;
   onSettings: () => void;
   onToolkit: () => void;
-  onTimed: () => void;
+  onTimed: (mode: TimedMode) => void;
 }) {
   const [posChooser, setPosChooser] = useState(false);
+  const [timedChooser, setTimedChooser] = useState(false);
   const accuracy =
     stats.totalAnswered === 0 ? "—" : `${Math.round((stats.totalCorrect / stats.totalAnswered) * 100)}%`;
   const learned = learnedCount(stats);
@@ -85,9 +86,9 @@ export function Home({
           <span className="mode-name">How far apart</span>
           <span className="mode-desc">See two cards, count the gap between them.</span>
         </button>
-        <button type="button" className="mode-button" onClick={onTimed}>
+        <button type="button" className="mode-button" onClick={() => setTimedChooser(true)}>
           <span className="mode-name">Timed run</span>
-          <span className="mode-desc">Race the clock cutting to 5 cards; beat your best time.</span>
+          <span className="mode-desc">Race the clock — cut to cards, or name their positions.</span>
         </button>
         <button type="button" className="mode-button" onClick={onAcaan}>
           <span className="mode-name">ACAAN cut</span>
@@ -129,6 +130,23 @@ export function Home({
               Position → card
             </button>
             <button type="button" className="btn btn-ghost filter-close" onClick={() => setPosChooser(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {timedChooser && (
+        <div className="filter-overlay" onClick={() => setTimedChooser(false)}>
+          <div className="filter-panel" onClick={(e) => e.stopPropagation()}>
+            <span className="filter-title">Timed run — which?</span>
+            <button type="button" className="filter-option" onClick={() => onTimed("cut")}>
+              Cut to it · 5 cards
+            </button>
+            <button type="button" className="filter-option" onClick={() => onTimed("position")}>
+              Name the position · 10 cards
+            </button>
+            <button type="button" className="btn btn-ghost filter-close" onClick={() => setTimedChooser(false)}>
               Close
             </button>
           </div>
