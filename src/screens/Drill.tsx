@@ -68,6 +68,13 @@ export function Drill({
   filterRef.current = filter;
   const [filterOpen, setFilterOpen] = useState(false);
 
+  // "How far apart" defaults to nearby pairs (≤ 6 apart) — the realistic
+  // cut-miss range — with a toggle to allow any gap.
+  const [distanceNear, setDistanceNear] = useState(true);
+  const distanceRef = useRef(distanceNear);
+  distanceRef.current = distanceNear;
+  const NEAR_MAX = 6;
+
   function poolPredicate(): ((c: string) => boolean) | undefined {
     const f = filterRef.current;
     if (f.type === "all") return undefined;
@@ -84,9 +91,17 @@ export function Drill({
     if (!focus) return null;
     lastRef.current = focus;
     if (needsSecondCard(mode)) {
-      // Distance needs a second, distinct learned card from the same pool. If
-      // the filter leaves fewer than two, bail to the empty state.
-      const second = selectLearnedCard(statsRef.current, focus, pred);
+      // Distance needs a second, distinct learned card from the same pool —
+      // and, by default, within NEAR_MAX positions of the focus card.
+      const fp = positionOf(focus);
+      const near = distanceRef.current;
+      const secondPred = (c: string) => {
+        if (pred && !pred(c)) return false;
+        if (!near) return true;
+        const d = Math.abs(positionOf(c) - fp);
+        return d >= 1 && d <= NEAR_MAX;
+      };
+      const second = selectLearnedCard(statsRef.current, focus, secondPred);
       if (!second || second === focus) return null;
       return buildQuestion(mode, focus, second);
     }
@@ -101,6 +116,16 @@ export function Drill({
     setPhase("answering");
     setRound((r) => r + 1);
     setFilterOpen(false);
+  }
+
+  function toggleDistance() {
+    const next = !distanceRef.current;
+    distanceRef.current = next; // sync so the next pick() uses it immediately
+    setDistanceNear(next);
+    setQuestion(pick());
+    setResult(null);
+    setPhase("answering");
+    setRound((r) => r + 1);
   }
 
   const [question, setQuestion] = useState<Question | null>(pick);
@@ -282,6 +307,18 @@ export function Drill({
                 {audioPrompt ? "switch to shown" : "switch to spoken"}
               </button>
             )}
+            {question.mode === "distance" && (
+              <button
+                type="button"
+                className="prompt-toggle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDistance();
+                }}
+              >
+                {distanceNear ? `within ${NEAR_MAX} · tap for any` : "any gap · tap for near"}
+              </button>
+            )}
           </div>
           <div className="stimulus" key={round}>
             {question.promptCardB ? (
@@ -314,7 +351,10 @@ export function Drill({
             )}
           </div>
           {question.inputKind === "number" ? (
-            <NumberGrid onSelect={handleNumber} count={question.mode === "distance" ? 51 : 52} />
+            <NumberGrid
+              onSelect={handleNumber}
+              count={question.mode === "distance" ? (distanceNear ? NEAR_MAX : 51) : 52}
+            />
           ) : (
             <CardGrid onSelect={handleCard} />
           )}
