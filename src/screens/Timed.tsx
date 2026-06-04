@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { learnedCount, selectSessionCards, type Stats } from "../storage";
+import { countBeep, goBeep, primeAudio } from "../audio";
 import { PlayingCard } from "../components/PlayingCard";
 import { TimedChart } from "../components/TimedChart";
 
@@ -45,16 +46,19 @@ export function Timed({
     return () => document.body.classList.remove("no-scroll");
   }, [phase]);
 
-  // Countdown 3 → 2 → 1 → go.
+  // Countdown 3 → 2 → 1 → go, with Formula-One-style beeps: a beep on each
+  // number, then a higher "lights out" tone as the run starts.
   useEffect(() => {
     if (phase !== "countdown") return;
     if (count <= 0) {
+      goBeep();
       startRef.current = performance.now();
       setNow(startRef.current);
       setIdx(0);
       setPhase("running");
       return;
     }
+    countBeep();
     const t = setTimeout(() => setCount((c) => c - 1), 800);
     return () => clearTimeout(t);
   }, [phase, count]);
@@ -69,6 +73,7 @@ export function Timed({
   function startRun() {
     const picked = selectSessionCards(statsRef.current, RUN_SIZE);
     if (picked.length === 0) return;
+    primeAudio(); // warm the audio context inside this tap so the beeps fire
     setCards(picked);
     setResult(null);
     setCount(3);

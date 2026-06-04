@@ -97,3 +97,43 @@ export function dud(): void {
     note(c, 349.2, t + 0.09, 0.45, 0.12); // F4 — a minor third down
   });
 }
+
+// A flatter, buzzier tone (square wave, mostly-held envelope) for the
+// Formula-One-style countdown beeps.
+function tone(
+  c: AudioContext,
+  freq: number,
+  startAt: number,
+  duration: number,
+  peakGain: number,
+): void {
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  osc.type = "square";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.linearRampToValueAtTime(peakGain, startAt + 0.008);
+  gain.gain.setValueAtTime(peakGain, Math.max(startAt + 0.01, startAt + duration - 0.04));
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+  osc.connect(gain);
+  gain.connect(c.destination);
+  osc.start(startAt);
+  osc.stop(startAt + duration + 0.05);
+}
+
+// One of the three identical "red light" beeps, on 3 · 2 · 1.
+export function countBeep(): void {
+  play((c) => tone(c, 620, c.currentTime, 0.16, 0.06));
+}
+
+// The higher, longer "lights out" tone when the run starts.
+export function goBeep(): void {
+  play((c) => tone(c, 1046.5, c.currentTime, 0.5, 0.08));
+}
+
+// Warm up the audio context inside a user gesture (the Start tap), so the
+// first countdown beep — fired from an effect a beat later — isn't blocked.
+export function primeAudio(): void {
+  const c = getCtx();
+  if (c && c.state === "suspended") c.resume().catch(() => {});
+}
