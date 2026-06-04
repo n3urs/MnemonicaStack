@@ -1,20 +1,24 @@
 import { useState } from "react";
-import { cardName, positionOf } from "../stack";
-import { SELF_LOCATORS, namedCardRoute } from "../landmarks";
+import { cardAt, cardName, cardShort, positionOf, selfLocators } from "../stack";
+import { namedCardRoute } from "../landmarks";
 import { Ornament } from "../components/Ornament";
 import { PlayingCard } from "../components/PlayingCard";
 import { CardGrid } from "../components/AnswerGrids";
 
-const LANDMARKS = [
-  { pos: 1, card: "4C", role: "Top card" },
-  { pos: 18, card: "KC", role: "K♣ crimp" },
-  { pos: 35, card: "KH", role: "K♥ crimp" },
-  { pos: 52, card: "9D", role: "Bottom (face) card" },
-];
-
 export function Toolkit({ onBack }: { onBack: () => void }) {
   const [picked, setPicked] = useState<string | null>(null);
   const route = picked ? namedCardRoute(positionOf(picked)) : null;
+
+  // Landmarks for the active stack — the positions are fixed, the cards aren't.
+  const crimp18 = cardShort(cardAt(18));
+  const crimp35 = cardShort(cardAt(35));
+  const landmarks = [
+    { pos: 1, card: cardAt(1), role: "Top card" },
+    { pos: 18, card: cardAt(18), role: `${crimp18} crimp` },
+    { pos: 35, card: cardAt(35), role: `${crimp35} crimp` },
+    { pos: 52, card: cardAt(52), role: "Bottom (face) card" },
+  ];
+  const locators = selfLocators();
 
   return (
     <div className="screen toolkit-screen">
@@ -35,11 +39,12 @@ export function Toolkit({ onBack }: { onBack: () => void }) {
       <section className="setup-section">
         <h2 className="section-title">Key landmarks</h2>
         <p className="setup-text">
-          Crimp the two Kings — K♣ at 18 and K♥ at 35 — as your quarter-deck anchors. With the free
-          top and bottom cards, no card is ever more than 9 away from an anchor.
+          Crimp the two cards at positions 18 ({crimp18}) and 35 ({crimp35}) as your quarter-deck
+          anchors. With the free top and bottom cards, no card is ever more than 9 away from an
+          anchor.
         </p>
         <div className="landmark-row">
-          {LANDMARKS.map((l) => (
+          {landmarks.map((l) => (
             <div key={l.pos} className="landmark-card">
               <PlayingCard card={l.card} size="small" />
               <span className="landmark-pos">pos {l.pos}</span>
@@ -54,10 +59,12 @@ export function Toolkit({ onBack }: { onBack: () => void }) {
       <section className="setup-section">
         <h2 className="section-title">Self-locating cards</h2>
         <p className="setup-text">
-          Three cards sit on their own number — the rank gives you the position outright.
+          {locators.length === 0
+            ? "This stack has no cards sitting on their own number."
+            : `${locators.length === 1 ? "One card sits" : `${locators.length} cards sit`} on their own number — the rank gives you the position outright.`}
         </p>
         <div className="landmark-row">
-          {SELF_LOCATORS.map((s) => (
+          {locators.map((s) => (
             <div key={s.card} className="landmark-card">
               <PlayingCard card={s.card} size="small" />
               <span className="landmark-pos">pos {s.pos}</span>
@@ -77,8 +84,8 @@ export function Toolkit({ onBack }: { onBack: () => void }) {
         </p>
         <p className="setup-text">
           To find a freely-chosen card without a glimpse: spread, eye-count the gap from the
-          selection to the nearest of the four anchors (top {`=`} 1, K♣ {`=`} 18, K♥ {`=`} 35, bottom{" "}
-          {`=`} 52). The most you'll ever count is 9.
+          selection to the nearest of the four anchors (top {`=`} 1, {crimp18} {`=`} 18, {crimp35}{" "}
+          {`=`} 35, bottom {`=`} 52). The most you'll ever count is 9.
         </p>
       </section>
 

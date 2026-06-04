@@ -1,4 +1,5 @@
 import { Ornament } from "../components/Ornament";
+import { isMnemonica } from "../stacks";
 
 // Right column, top -> bottom, is labelled 4, 1, 2, 3.
 const ANCHOR_LABELS = [4, 1, 2, 3];
@@ -36,6 +37,26 @@ function PileGrid() {
 }
 
 export function Setup({ onBack }: { onBack: () => void }) {
+  if (!isMnemonica()) {
+    return (
+      <div className="screen setup-screen">
+        <div className="toolbar">
+          <button type="button" className="btn-link" onClick={onBack}>
+            ← Back
+          </button>
+          <span className="toolbar-title">Set up a deck</span>
+          <span className="toolbar-spacer" />
+        </div>
+        <p className="setup-intro">This build-from-new-deck guide is written for the Mnemonica stack.</p>
+        <p className="setup-text" style={{ textAlign: "center" }}>
+          The 16-pile method produces Mnemonica specifically. To get into this stack's order, follow
+          its own published setup — then the drills, reference and performance tools here all work the
+          same way.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="screen setup-screen">
       <div className="toolbar">

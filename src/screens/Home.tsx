@@ -13,7 +13,7 @@ export function Home({
   onReference,
   onSetup,
   onInsights,
-  onSync,
+  onSettings,
   onToolkit,
   onTimed,
 }: {
@@ -25,7 +25,7 @@ export function Home({
   onReference: () => void;
   onSetup: () => void;
   onInsights: () => void;
-  onSync: () => void;
+  onSettings: () => void;
   onToolkit: () => void;
   onTimed: () => void;
 }) {
@@ -113,8 +113,8 @@ export function Home({
         <button type="button" className="btn btn-ghost" onClick={onStats}>
           View stats
         </button>
-        <button type="button" className="btn btn-ghost" onClick={onSync}>
-          Cloud sync
+        <button type="button" className="btn btn-ghost" onClick={onSettings}>
+          Settings
         </button>
       </div>
 

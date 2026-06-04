@@ -1,6 +1,13 @@
 import { STACK } from "./stack";
+import { allStackIds, DEFAULT_STACK_ID, getActiveStackId } from "./stacks";
 
-const STORAGE_KEY = "mnemonica-trainer-v1";
+const STORAGE_PREFIX = "mnemonica-trainer-v1";
+
+// The original (Mnemonica) progress lives at the bare key — never moved, so
+// existing data is safe. Every other stack gets its own suffixed key.
+function storageKey(stackId: string): string {
+  return stackId === DEFAULT_STACK_ID ? STORAGE_PREFIX : `${STORAGE_PREFIX}:${stackId}`;
+}
 
 export interface CardStat {
   seen: number;
@@ -99,8 +106,12 @@ function timedFields(r: Partial<Stats>): Pick<Stats, "timedHistory" | "timedBest
 }
 
 export function loadStats(): Stats {
+  return loadStatsFor(getActiveStackId());
+}
+
+export function loadStatsFor(stackId: string): Stats {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(stackId));
     if (!raw) return defaultStats();
     return normalizeStats(JSON.parse(raw) as Partial<Stats>);
   } catch {
@@ -109,11 +120,48 @@ export function loadStats(): Stats {
 }
 
 export function saveStats(stats: Stats): void {
+  saveStatsFor(getActiveStackId(), stats);
+}
+
+export function saveStatsFor(stackId: string, stats: Stats): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+    localStorage.setItem(storageKey(stackId), JSON.stringify(stats));
   } catch {
     // Ignore quota / private-mode write failures.
   }
+}
+
+// ---- Multi-stack helpers (used by cloud sync) ----
+
+// Every stack that has saved progress, keyed by stack id.
+export function loadAllProgress(): Record<string, Stats> {
+  const out: Record<string, Stats> = {};
+  for (const id of allStackIds()) {
+    try {
+      const raw = localStorage.getItem(storageKey(id));
+      if (raw) out[id] = normalizeStats(JSON.parse(raw) as Partial<Stats>);
+    } catch {
+      /* skip a corrupt entry */
+    }
+  }
+  return out;
+}
+
+export function saveAllProgress(map: Record<string, Stats>): void {
+  for (const [id, stats] of Object.entries(map)) saveStatsFor(id, stats);
+}
+
+// Per-stack newer-wins merge — never loses a stack that only one side has.
+export function mergeProgress(
+  local: Record<string, Stats>,
+  cloud: Record<string, Stats>,
+): Record<string, Stats> {
+  const out: Record<string, Stats> = { ...local };
+  for (const [id, cloudStats] of Object.entries(cloud)) {
+    const localStats = out[id];
+    if (!localStats || cloudStats.updatedAt >= localStats.updatedAt) out[id] = cloudStats;
+  }
+  return out;
 }
 
 function dateStr(d: Date): string {

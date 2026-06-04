@@ -6,8 +6,11 @@ import {
   applyTimedRun,
   defaultStats,
   introduceCard,
+  loadAllProgress,
   loadStats,
+  mergeProgress,
   retireLastTimedRun,
+  saveAllProgress,
   saveStats,
   type CardNote,
   type Stats,
@@ -19,6 +22,7 @@ import {
   saveSyncCode,
   syncConfigured,
 } from "./sync";
+import { getActiveStackId, setActiveStackId } from "./stacks";
 import type { Mode } from "./quiz";
 import { Home } from "./screens/Home";
 import { Learn } from "./screens/Learn";
@@ -27,7 +31,7 @@ import { Stats as StatsScreen } from "./screens/Stats";
 import { Reference } from "./screens/Reference";
 import { Setup } from "./screens/Setup";
 import { Insights } from "./screens/Insights";
-import { Sync } from "./screens/Sync";
+import { Settings } from "./screens/Settings";
 import { Toolkit } from "./screens/Toolkit";
 import { Timed } from "./screens/Timed";
 import { Acaan } from "./screens/Acaan";
@@ -41,7 +45,7 @@ type Screen =
   | { name: "reference" }
   | { name: "setup" }
   | { name: "insights" }
-  | { name: "sync" }
+  | { name: "settings" }
   | { name: "toolkit" }
   | { name: "timed" }
   | { name: "acaan" };
@@ -54,60 +58,58 @@ export default function App() {
   const [syncCode, setSyncCode] = useState<string>(getSyncCode);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({ busy: false, message: "" });
 
-  const statsRef = useRef(stats);
-  statsRef.current = stats;
   const inited = useRef(false);
 
-  const adopt = useCallback((s: Stats) => {
-    saveStats(s);
-    setStats(s);
+  // Refresh the active stack's stats into React state from whatever's now in
+  // localStorage (after a merge / pull writes to the per-stack keys).
+  const refreshActive = useCallback((map: Record<string, Stats>) => {
+    const active = map[getActiveStackId()];
+    if (active) setStats(active);
   }, []);
 
-  // Pull the cloud copy; adopt it if it's newer, otherwise back up this device.
+  // Pull the cloud's per-stack map, merge it with this device (newer wins per
+  // stack — no stack's progress is ever lost), save, and push the union back.
   const reconcile = useCallback(
     async (code: string) => {
       if (!syncConfigured() || !code) return;
       setSyncStatus({ busy: true, message: "Syncing…" });
       try {
         const cloud = await pullProgress(code);
-        if (cloud && cloud.updatedAt >= statsRef.current.updatedAt) {
-          adopt(cloud);
-          setSyncStatus({ busy: false, message: "Pulled the newer copy from the cloud." });
-        } else {
-          await pushProgress(code, statsRef.current);
-          setSyncStatus({ busy: false, message: "This device is backed up to the cloud." });
-        }
+        const local = loadAllProgress();
+        const merged = cloud ? mergeProgress(local, cloud) : local;
+        saveAllProgress(merged);
+        refreshActive(merged);
+        await pushProgress(code, merged);
+        setSyncStatus({ busy: false, message: "Synced — every stack is in step." });
       } catch {
         setSyncStatus({ busy: false, message: "Sync failed — check your connection." });
       }
     },
-    [adopt],
+    [refreshActive],
   );
 
-  const forcePull = useCallback(
-    async () => {
-      if (!syncConfigured() || !syncCode) return;
-      setSyncStatus({ busy: true, message: "Pulling…" });
-      try {
-        const cloud = await pullProgress(syncCode);
-        if (cloud) {
-          adopt(cloud);
-          setSyncStatus({ busy: false, message: "Replaced this device with the cloud copy." });
-        } else {
-          setSyncStatus({ busy: false, message: "No cloud data found for that code yet." });
-        }
-      } catch {
-        setSyncStatus({ busy: false, message: "Pull failed — check your connection." });
+  const forcePull = useCallback(async () => {
+    if (!syncConfigured() || !syncCode) return;
+    setSyncStatus({ busy: true, message: "Pulling…" });
+    try {
+      const cloud = await pullProgress(syncCode);
+      if (cloud) {
+        saveAllProgress(cloud);
+        refreshActive(cloud);
+        setSyncStatus({ busy: false, message: "Pulled the cloud copy to this device." });
+      } else {
+        setSyncStatus({ busy: false, message: "No cloud data found for that code yet." });
       }
-    },
-    [adopt, syncCode],
-  );
+    } catch {
+      setSyncStatus({ busy: false, message: "Pull failed — check your connection." });
+    }
+  }, [syncCode, refreshActive]);
 
   const forcePush = useCallback(async () => {
     if (!syncConfigured() || !syncCode) return;
     setSyncStatus({ busy: true, message: "Pushing…" });
     try {
-      await pushProgress(syncCode, statsRef.current);
+      await pushProgress(syncCode, loadAllProgress());
       setSyncStatus({ busy: false, message: "Pushed this device to the cloud." });
     } catch {
       setSyncStatus({ busy: false, message: "Push failed — check your connection." });
@@ -130,6 +132,15 @@ export default function App() {
     setSyncStatus({ busy: false, message: "Sync turned off on this device." });
   }, []);
 
+  // Switch the active stack. Each stack's progress lives under its own key, so
+  // this only changes which one is loaded. We reload so the stack order and the
+  // loaded progress re-initialise cleanly everywhere.
+  const switchStack = useCallback((id: string) => {
+    if (id === getActiveStackId()) return;
+    setActiveStackId(id);
+    window.location.reload();
+  }, []);
+
   // Reconcile once on launch if sync is already connected.
   useEffect(() => {
     const code = getSyncCode();
@@ -146,7 +157,7 @@ export default function App() {
   useEffect(() => {
     if (!syncConfigured() || !syncCode || !inited.current) return;
     const t = setTimeout(() => {
-      pushProgress(syncCode, statsRef.current).catch(() => {});
+      pushProgress(syncCode, loadAllProgress()).catch(() => {});
     }, 1500);
     return () => clearTimeout(t);
   }, [stats, syncCode]);
@@ -157,7 +168,7 @@ export default function App() {
     if (!syncConfigured()) return;
     const flush = () => {
       const code = getSyncCode();
-      if (code) pushProgress(code, statsRef.current).catch(() => {});
+      if (code) pushProgress(code, loadAllProgress()).catch(() => {});
     };
     const onVisibility = () => {
       const code = getSyncCode();
@@ -252,7 +263,7 @@ export default function App() {
           onReference={() => setScreen({ name: "reference" })}
           onSetup={() => setScreen({ name: "setup" })}
           onInsights={() => setScreen({ name: "insights" })}
-          onSync={() => setScreen({ name: "sync" })}
+          onSettings={() => setScreen({ name: "settings" })}
           onToolkit={() => setScreen({ name: "toolkit" })}
           onTimed={() => setScreen({ name: "timed" })}
         />
@@ -281,10 +292,12 @@ export default function App() {
       {screen.name === "insights" && (
         <Insights onBack={goHome} onSetup={() => setScreen({ name: "setup" })} />
       )}
-      {screen.name === "sync" && (
-        <Sync
+      {screen.name === "settings" && (
+        <Settings
+          activeStackId={getActiveStackId()}
+          onSwitchStack={switchStack}
           syncCode={syncCode}
-          status={syncStatus}
+          syncStatus={syncStatus}
           onConnect={connectSync}
           onDisconnect={disconnectSync}
           onSyncNow={() => void reconcile(syncCode)}

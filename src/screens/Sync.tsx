@@ -11,6 +11,7 @@ export function Sync({
   onPush,
   onPull,
   onBack,
+  embedded = false,
 }: {
   syncCode: string;
   status: { busy: boolean; message: string };
@@ -19,21 +20,24 @@ export function Sync({
   onSyncNow: () => void;
   onPush: () => void;
   onPull: () => void;
-  onBack: () => void;
+  onBack?: () => void;
+  embedded?: boolean;
 }) {
   const [draft, setDraft] = useState("");
   const configured = syncConfigured();
   const connected = syncCode !== "";
 
   return (
-    <div className="screen sync-screen">
-      <div className="toolbar">
-        <button type="button" className="btn-link" onClick={onBack}>
-          ← Back
-        </button>
-        <span className="toolbar-title">Cloud sync</span>
-        <span className="toolbar-spacer" />
-      </div>
+    <div className={embedded ? "sync-embedded" : "screen sync-screen"}>
+      {!embedded && (
+        <div className="toolbar">
+          <button type="button" className="btn-link" onClick={onBack}>
+            ← Back
+          </button>
+          <span className="toolbar-title">Cloud sync</span>
+          <span className="toolbar-spacer" />
+        </div>
+      )}
 
       {!configured ? (
         <>

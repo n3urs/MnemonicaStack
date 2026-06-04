@@ -1,13 +1,15 @@
-// The Mnemonica stack, positions 1-52, top of deck to bottom.
-// Cards are encoded as two-character strings: rank + suit (T = ten).
-export const STACK: string[] = [
-  "4C", "2H", "7D", "3C", "4H", "6D", "AS", "5H", "9S", "2S",
-  "QH", "3D", "QC", "8H", "6S", "5S", "9H", "KC", "2D", "JH",
-  "3S", "8S", "6H", "TC", "5D", "KD", "2C", "3H", "8D", "5C",
-  "KS", "JD", "8C", "TS", "KH", "JC", "7S", "TH", "AD", "4S",
-  "7H", "4D", "AC", "9C", "JS", "QD", "7C", "QS", "TD", "6C",
-  "AH", "9D",
-];
+import { activeStack } from "./stacks";
+
+// The stack currently being learned, positions 1-52, top of deck to bottom.
+// Cards are encoded as two-character strings: rank + suit (T = ten). The order
+// comes from whichever stack is active (see stacks.ts); switching stacks
+// reloads the app so this re-initialises.
+export const STACK: string[] = activeStack().cards;
+
+const RANK_VALUE: Record<string, number> = {
+  A: 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7,
+  "8": 8, "9": 9, T: 10, J: 11, Q: 12, K: 13,
+};
 
 export const SUIT_SYMBOLS: Record<string, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
 export const SUIT_NAMES: Record<string, string> = { S: "spades", H: "hearts", D: "diamonds", C: "clubs" };
@@ -37,6 +39,11 @@ export function cardName(card: string): string {
   return `${RANK_NAMES[rankOf(card)]} of ${SUIT_NAMES[suitOf(card)]}`;
 }
 
+// Compact label, e.g. "K♣" or "10♦".
+export function cardShort(card: string): string {
+  return `${displayRank(card)}${SUIT_SYMBOLS[suitOf(card)]}`;
+}
+
 export function positionOf(card: string): number {
   return STACK.indexOf(card) + 1;
 }
@@ -53,4 +60,21 @@ export function nextCard(card: string): string {
 
 export function prevCard(card: string): string {
   return STACK[(positionOf(card) - 2 + 52) % 52];
+}
+
+// A card's rank as a number: A=1 … K=13.
+export function rankValue(card: string): number {
+  return RANK_VALUE[rankOf(card)];
+}
+
+// Cards that sit on their own number — rank value equals position. Can only
+// happen in the first 13 positions (no rank exceeds 13). Computed from the
+// active stack, so it's correct for whichever stack is loaded.
+export function selfLocators(): { card: string; pos: number }[] {
+  const out: { card: string; pos: number }[] = [];
+  for (let p = 1; p <= 13; p++) {
+    const c = STACK[p - 1];
+    if (rankValue(c) === p) out.push({ card: c, pos: p });
+  }
+  return out;
 }

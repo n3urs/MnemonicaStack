@@ -2409,3 +2409,74 @@ body.no-scroll .drill .result {
 .ref-detail-close {
   width: 100%;
 }
+
+/* ---------- Settings: stack switcher + embedded sync ---------- */
+.sync-embedded {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.stack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(245, 239, 224, 0.02);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.stack-row:not(:disabled):hover {
+  border-color: var(--line-strong);
+}
+.stack-row.is-active {
+  border-color: var(--gold);
+  background: rgba(212, 184, 120, 0.06);
+  cursor: default;
+}
+.stack-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stack-row-name {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--text);
+}
+.stack-row-author {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.stack-row-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.stack-row.is-active .stack-row-meta {
+  color: var(--gold-bright);
+}
+.stack-confirm {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background: rgba(212, 184, 120, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

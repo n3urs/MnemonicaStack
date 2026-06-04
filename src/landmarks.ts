@@ -3,26 +3,17 @@
 // top" routing logic. Kept in one place so the Toolkit and Insights screens
 // agree on the landmarks.
 
-import { cardName, positionOf } from "./stack";
+import { cardAt, cardName, cardShort, positionOf } from "./stack";
 
-export const TOP_POS = 1; // 4♣
-export const BOTTOM_POS = 52; // 9♦
+export const TOP_POS = 1;
+export const BOTTOM_POS = 52;
 
-// The two crimped Kings — the quarter-deck anchors.
-export const CRIMPS = [
-  { pos: 18, card: "KC" },
-  { pos: 35, card: "KH" },
-] as const;
+// The two crimped quarter-deck anchors. The positions are fixed (18 and 35);
+// which cards live there depends on the active stack.
+export const CRIMP_POSITIONS = [18, 35];
 
 // Every reference point you can cut/spread to without counting from an end.
 export const ANCHOR_POSITIONS = [TOP_POS, 18, 35, BOTTOM_POS];
-
-// Cards whose rank value equals their position — no peg needed.
-export const SELF_LOCATORS = [
-  { card: "2H", pos: 2 },
-  { card: "6D", pos: 6 },
-  { card: "9S", pos: 9 },
-];
 
 // Nearest anchor position to a given position, and the (signed) offset to it.
 export function nearestAnchor(pos: number): { anchor: number; offset: number } {
@@ -98,8 +89,8 @@ export function namedCardRoute(position: number): ControlRoute {
   const dC = Math.abs(position - 18);
   const dH = Math.abs(position - 35);
   if (Math.min(dC, dH) <= 9) {
-    const useClub = dC <= dH;
-    const crimp = useClub ? { pos: 18, name: "K♣" } : { pos: 35, name: "K♥" };
+    const pos = dC <= dH ? 18 : 35;
+    const crimp = { pos, name: cardShort(cardAt(pos)) };
     const offset = position - crimp.pos;
     const dir = offset > 0 ? "below" : "above";
     const gap = Math.abs(offset);
