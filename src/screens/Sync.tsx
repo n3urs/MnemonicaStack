@@ -10,6 +10,7 @@ export function Sync({
   onSyncNow,
   onPush,
   onPull,
+  onChangeCode,
   onBack,
   embedded = false,
 }: {
@@ -20,6 +21,7 @@ export function Sync({
   onSyncNow: () => void;
   onPush: () => void;
   onPull: () => void;
+  onChangeCode?: () => void;
   onBack?: () => void;
   embedded?: boolean;
 }) {
@@ -124,6 +126,23 @@ export function Sync({
           <p className="sync-hint">
             Push overwrites the cloud with this device. Pull overwrites this device with the cloud.
           </p>
+
+          {onChangeCode && (
+            <>
+              <button
+                type="button"
+                className="btn btn-ghost sync-disconnect"
+                disabled={status.busy}
+                onClick={onChangeCode}
+              >
+                Change sync code
+              </button>
+              <p className="sync-hint">
+                Re-keys your cloud data under a fresh code — anyone holding the old one is locked
+                out. You'll need to enter the new code on your other devices.
+              </p>
+            </>
+          )}
 
           <button type="button" className="btn btn-danger sync-disconnect" onClick={onDisconnect}>
             Turn off sync here

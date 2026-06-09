@@ -76,6 +76,20 @@ export function Timed({
     return () => clearInterval(id);
   }, [phase]);
 
+  // If the app backgrounds mid-run (call, lock screen…) the wall clock keeps
+  // counting and the run is ruined — abandon it rather than record junk.
+  useEffect(() => {
+    if (phase !== "running" && phase !== "countdown") return;
+    const onHide = () => {
+      if (document.visibilityState === "hidden") {
+        setResult(null);
+        setPhase("ready");
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [phase]);
+
   function startRun() {
     const picked = selectSessionCards(statsRef.current, runSize);
     if (picked.length === 0) return;

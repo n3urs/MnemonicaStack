@@ -55,7 +55,7 @@ export function Drill({
 }: {
   mode: Mode;
   stats: Stats;
-  onRecord: (card: string, correct: boolean) => void;
+  onRecord: (card: string, correct: boolean, elapsedMs?: number) => void;
   onBack: () => void;
   onLearn: () => void;
 }) {
@@ -151,13 +151,21 @@ export function Drill({
     return () => cancelSpeech();
   }, []);
 
+  // Stamp when each question lands so we can record how long the answer took —
+  // a slow correct answer marks a weak card just like a miss does.
+  const shownAtRef = useRef(performance.now());
+  useEffect(() => {
+    shownAtRef.current = performance.now();
+  }, [round]);
+
   function submit(correct: boolean, choice: number | string) {
     const q = question;
     if (!q) return;
+    const elapsedMs = performance.now() - shownAtRef.current;
     setResult({ correct, choice });
     setPhase("answered");
     setSession((s) => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
-    onRecord(q.focusCard, correct);
+    onRecord(q.focusCard, correct, elapsedMs);
     cancelSpeech();
     if (correct) {
       celebrate();

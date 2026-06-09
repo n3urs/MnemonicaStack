@@ -17,6 +17,8 @@ import {
   type TimedMode,
 } from "./storage";
 import {
+  deleteProgress,
+  generateSyncCode,
   getSyncCode,
   pullProgress,
   pushProgress,
@@ -36,6 +38,8 @@ import { Settings } from "./screens/Settings";
 import { Toolkit } from "./screens/Toolkit";
 import { Timed } from "./screens/Timed";
 import { Acaan } from "./screens/Acaan";
+import { AudioDrill } from "./screens/AudioDrill";
+import { StackEditor } from "./screens/StackEditor";
 import { SoundKey } from "./components/SoundKey";
 
 type Screen =
@@ -47,9 +51,11 @@ type Screen =
   | { name: "setup" }
   | { name: "insights" }
   | { name: "settings" }
+  | { name: "stackEditor" }
   | { name: "toolkit" }
   | { name: "timed"; mode: TimedMode }
-  | { name: "acaan" };
+  | { name: "acaan" }
+  | { name: "audio" };
 
 export type SyncStatus = { busy: boolean; message: string };
 
@@ -133,6 +139,24 @@ export default function App() {
     setSyncStatus({ busy: false, message: "Sync turned off on this device." });
   }, []);
 
+  // Rotate the sync code: push everything to a fresh row, adopt the new code,
+  // and best-effort delete the old row. The old code stops working.
+  const changeSyncCode = useCallback(async () => {
+    if (!syncConfigured()) return;
+    const oldCode = getSyncCode();
+    const code = generateSyncCode();
+    setSyncStatus({ busy: true, message: "Re-keying…" });
+    try {
+      await pushProgress(code, loadAllProgress());
+      saveSyncCode(code);
+      setSyncCode(code);
+      if (oldCode) deleteProgress(oldCode).catch(() => {});
+      setSyncStatus({ busy: false, message: "New code active — enter it on your other devices." });
+    } catch {
+      setSyncStatus({ busy: false, message: "Couldn't re-key — check your connection." });
+    }
+  }, []);
+
   // Switch the active stack. Each stack's progress lives under its own key, so
   // this only changes which one is loaded. We reload so the stack order and the
   // loaded progress re-initialise cleanly everywhere.
@@ -185,9 +209,9 @@ export default function App() {
     };
   }, [reconcile]);
 
-  const recordAnswer = useCallback((card: string, correct: boolean) => {
+  const recordAnswer = useCallback((card: string, correct: boolean, elapsedMs?: number) => {
     setStats((prev) => {
-      const next = applyAnswer(prev, card, correct);
+      const next = applyAnswer(prev, card, correct, elapsedMs);
       saveStats(next);
       return next;
     });
@@ -267,6 +291,7 @@ export default function App() {
           onSettings={() => setScreen({ name: "settings" })}
           onToolkit={() => setScreen({ name: "toolkit" })}
           onTimed={(mode) => setScreen({ name: "timed", mode })}
+          onAudio={() => setScreen({ name: "audio" })}
         />
       )}
       {screen.name === "learn" && (
@@ -297,6 +322,7 @@ export default function App() {
         <Settings
           activeStackId={getActiveStackId()}
           onSwitchStack={switchStack}
+          onCreateStack={() => setScreen({ name: "stackEditor" })}
           syncCode={syncCode}
           syncStatus={syncStatus}
           onConnect={connectSync}
@@ -304,11 +330,21 @@ export default function App() {
           onSyncNow={() => void reconcile(syncCode)}
           onPush={forcePush}
           onPull={forcePull}
+          onChangeCode={() => void changeSyncCode()}
           onBack={goHome}
         />
       )}
       {screen.name === "acaan" && (
         <Acaan stats={stats} onBack={goHome} onLearn={() => setScreen({ name: "learn" })} />
+      )}
+      {screen.name === "audio" && (
+        <AudioDrill stats={stats} onBack={goHome} onLearn={() => setScreen({ name: "learn" })} />
+      )}
+      {screen.name === "stackEditor" && (
+        <StackEditor
+          onBack={() => setScreen({ name: "settings" })}
+          onSaved={() => setScreen({ name: "settings" })}
+        />
       )}
       {screen.name === "toolkit" && <Toolkit onBack={goHome} />}
       {screen.name === "timed" && (

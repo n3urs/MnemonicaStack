@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { learnedCount, type Stats, type TimedMode } from "../storage";
+import { dueCount, learnedCount, type Stats, type TimedMode } from "../storage";
 import { type Mode } from "../quiz";
 import { MetricBox } from "../components/MetricBox";
 import { Ornament } from "../components/Ornament";
@@ -16,6 +16,7 @@ export function Home({
   onSettings,
   onToolkit,
   onTimed,
+  onAudio,
 }: {
   stats: Stats;
   onLearn: () => void;
@@ -28,12 +29,14 @@ export function Home({
   onSettings: () => void;
   onToolkit: () => void;
   onTimed: (mode: TimedMode) => void;
+  onAudio: () => void;
 }) {
   const [posChooser, setPosChooser] = useState(false);
   const [timedChooser, setTimedChooser] = useState(false);
   const accuracy =
     stats.totalAnswered === 0 ? "—" : `${Math.round((stats.totalCorrect / stats.totalAnswered) * 100)}%`;
   const learned = learnedCount(stats);
+  const due = dueCount(stats);
   const bestPerCard = stats.timedBest === null ? "—" : `${stats.timedBest.toFixed(1)}s`;
 
   return (
@@ -72,6 +75,13 @@ export function Home({
         </span>
       </button>
 
+      {due > 0 && (
+        <button type="button" className="due-banner" onClick={() => onStart("cardToPosition")}>
+          <span className="due-count">{due}</span> card{due === 1 ? "" : "s"} due for review today —
+          drill them →
+        </button>
+      )}
+
       <p className="eyebrow">Drills</p>
       <div className="mode-list">
         <button type="button" className="mode-button" onClick={() => setPosChooser(true)}>
@@ -93,6 +103,10 @@ export function Home({
         <button type="button" className="mode-button" onClick={onAcaan}>
           <span className="mode-name">ACAAN cut</span>
           <span className="mode-desc">Work out the cut so a named card deals to any number.</span>
+        </button>
+        <button type="button" className="mode-button" onClick={onAudio}>
+          <span className="mode-name">Hands-free audio</span>
+          <span className="mode-desc">It speaks a card, you think, it speaks the answer — looped.</span>
         </button>
       </div>
 

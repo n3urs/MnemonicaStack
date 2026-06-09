@@ -2480,3 +2480,204 @@ body.no-scroll .drill .result {
   flex-direction: column;
   gap: 10px;
 }
+
+/* ---------- Due-today banner (Home) ---------- */
+.due-banner {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px;
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: rgba(212, 184, 120, 0.07);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.due-banner:hover {
+  border-color: var(--gold);
+}
+.due-count {
+  color: var(--gold-bright);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ---------- Response-speed heatmap (Stats) ---------- */
+.heat-grid {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 4px;
+}
+.heat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--bg);
+  font-weight: 700;
+}
+.heat-cell.is-empty {
+  border: 1px dashed var(--line);
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.heat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.heat-legend span + .heat-swatch {
+  margin-left: 8px;
+}
+.heat-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.heat-swatch.is-empty {
+  border: 1px dashed var(--line);
+}
+.slow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.slow-row {
+  display: flex;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.slow-card {
+  color: var(--text);
+  font-weight: 700;
+  min-width: 34px;
+}
+.slow-pos {
+  color: var(--text-dim);
+}
+.slow-time {
+  color: var(--suit-red-soft);
+}
+
+/* ---------- Hands-free audio drill ---------- */
+.audio-screen {
+  gap: 16px;
+}
+.audio-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.audio-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.audio-chip {
+  padding: 10px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(245, 239, 224, 0.03);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.audio-chip.is-active {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--bg);
+  font-weight: 700;
+}
+.audio-now {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.audio-answer {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--gold-bright);
+}
+
+/* ---------- Custom stack editor ---------- */
+.stack-paste {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.stack-parse-status {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.stack-parse-status.has-errors {
+  color: var(--suit-red-soft);
+}
+.stack-parse-errors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stack-preview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+}
+.stack-preview-cell em {
+  font-style: normal;
+  color: var(--text-dim);
+  font-size: 9.5px;
+}
+
+/* Stack rows hold a button + meta now (delete affordance on custom stacks). */
+.stack-row-main {
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stack-row-main:disabled {
+  cursor: default;
+}
+.stack-row-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.stack-delete {
+  color: var(--suit-red-soft);
+  font-size: 11px;
+  padding: 2px 4px;
+}

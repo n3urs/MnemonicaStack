@@ -86,3 +86,35 @@ export function cancelSpeech(): void {
     /* ignore */
   }
 }
+
+// Speak and resolve when the utterance finishes — the hands-free drill chains
+// phrases off this. A timeout fallback covers platforms where end/error events
+// don't fire reliably (iOS after interruptions).
+export function speakAsync(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return resolve();
+    try {
+      window.speechSynthesis.cancel();
+      if (!chosenVoice) chooseVoice();
+      const utt = new SpeechSynthesisUtterance(text);
+      if (chosenVoice) utt.voice = chosenVoice;
+      utt.lang = chosenVoice?.lang ?? "en-US";
+      utt.rate = 1;
+      utt.pitch = 1;
+      utt.volume = 0.5;
+      let done = false;
+      const finish = () => {
+        if (!done) {
+          done = true;
+          resolve();
+        }
+      };
+      utt.onend = finish;
+      utt.onerror = finish;
+      setTimeout(finish, Math.max(2500, text.length * 130));
+      window.speechSynthesis.speak(utt);
+    } catch {
+      resolve();
+    }
+  });
+}

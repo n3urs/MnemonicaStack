@@ -14,6 +14,16 @@ export interface CardStat {
   correct: number;
   wrong: number;
   recent: boolean[]; // last 10 results, true = correct
+  // Response-time fluency: total ms and count across CORRECT answers only —
+  // a slow right answer marks a weak card just as surely as a miss.
+  msTotal?: number;
+  msCount?: number;
+}
+
+// Average correct-answer latency in ms, or null with no data yet.
+export function cardLatency(s: CardStat | undefined): number | null {
+  if (!s || !s.msCount || !s.msTotal) return null;
+  return s.msTotal / s.msCount;
 }
 
 export interface LearnCard {
@@ -173,7 +183,9 @@ export function saveAllProgress(map: Record<string, Stats>): void {
   for (const [id, stats] of Object.entries(map)) saveStatsFor(id, stats);
 }
 
-// Per-stack newer-wins merge — never loses a stack that only one side has.
+// Per-stack merge — never loses a stack that only one side has, and merges
+// field-by-field when both sides have one (so two devices that both practised
+// offline don't silently overwrite each other).
 export function mergeProgress(
   local: Record<string, Stats>,
   cloud: Record<string, Stats>,
@@ -181,9 +193,60 @@ export function mergeProgress(
   const out: Record<string, Stats> = { ...local };
   for (const [id, cloudStats] of Object.entries(cloud)) {
     const localStats = out[id];
-    if (!localStats || cloudStats.updatedAt >= localStats.updatedAt) out[id] = cloudStats;
+    out[id] = localStats ? mergeStats(localStats, cloudStats) : cloudStats;
   }
   return out;
+}
+
+// Union two copies of one stack's progress. The newer copy is the base; the
+// older one back-fills anything only it has. Counters are monotonic so max is
+// safe; per-card stats keep whichever side has more history; timed runs are
+// unioned by timestamp.
+function mergeStats(a: Stats, b: Stats): Stats {
+  const [newer, older] = a.updatedAt >= b.updatedAt ? [a, b] : [b, a];
+
+  const cards = { ...newer.cards };
+  for (const [c, s] of Object.entries(older.cards)) {
+    const n = cards[c];
+    if (!n || s.seen > n.seen) cards[c] = s;
+  }
+
+  const timedHistory = mergeRuns(newer.timedHistory, older.timedHistory);
+  const timedPosHistory = mergeRuns(newer.timedPosHistory, older.timedPosHistory);
+
+  return {
+    ...newer,
+    totalAnswered: Math.max(newer.totalAnswered, older.totalAnswered),
+    totalCorrect: Math.max(newer.totalCorrect, older.totalCorrect),
+    bestStreak: Math.max(newer.bestStreak, older.bestStreak),
+    dailyStreak: Math.max(newer.dailyStreak, older.dailyStreak),
+    cards,
+    learn: { ...older.learn, ...newer.learn }, // learned cards never vanish
+    notes: { ...older.notes, ...newer.notes },
+    pegs: { ...older.pegs, ...newer.pegs },
+    timedHistory,
+    timedBest: bestOf(timedHistory),
+    timedRuns: timedHistory.length,
+    timedPosHistory,
+    timedPosBest: bestOf(timedPosHistory),
+    timedPosRuns: timedPosHistory.length,
+    updatedAt: Math.max(newer.updatedAt, older.updatedAt),
+  };
+}
+
+function mergeRuns(x: TimedRun[], y: TimedRun[]): TimedRun[] {
+  const byTime = new Map<number, TimedRun>();
+  for (const r of [...x, ...y]) byTime.set(r.at, r);
+  return [...byTime.values()].sort((p, q) => p.at - q.at).slice(-TIMED_HISTORY_CAP);
+}
+
+// Remove a stack's saved progress (used when deleting a custom stack).
+export function deleteProgressFor(stackId: string): void {
+  try {
+    localStorage.removeItem(storageKey(stackId));
+  } catch {
+    /* ignore */
+  }
 }
 
 function dateStr(d: Date): string {
@@ -207,13 +270,22 @@ function applyDailyStreak(stats: Stats): Stats {
   return { ...stats, dailyStreak, lastSessionDate: today };
 }
 
-export function applyAnswer(stats: Stats, card: string, correct: boolean): Stats {
+export function applyAnswer(
+  stats: Stats,
+  card: string,
+  correct: boolean,
+  elapsedMs?: number,
+): Stats {
   const prev = stats.cards[card] ?? { seen: 0, correct: 0, wrong: 0, recent: [] };
+  // Latency only accumulates on correct answers — wrong-answer time is noise.
+  const logMs = correct && elapsedMs != null && elapsedMs > 0 && elapsedMs < 120_000;
   const cardStat: CardStat = {
     seen: prev.seen + 1,
     correct: prev.correct + (correct ? 1 : 0),
     wrong: prev.wrong + (correct ? 0 : 1),
     recent: [...prev.recent, correct].slice(-10),
+    msTotal: (prev.msTotal ?? 0) + (logMs ? elapsedMs : 0),
+    msCount: (prev.msCount ?? 0) + (logMs ? 1 : 0),
   };
   const currentStreak = correct ? stats.currentStreak + 1 : 0;
 
@@ -259,14 +331,19 @@ export function applyPeg(stats: Stats, position: number, value: string): Stats {
   return { ...stats, pegs: { ...stats.pegs, [position]: value }, updatedAt: Date.now() };
 }
 
-// Record a finished timed run. `avgSeconds` is total time / cards.
+// Record a finished timed run. `avgSeconds` is total time / cards. Timed runs
+// count as practice, so they keep the day streak alive too.
 export function applyTimedRun(stats: Stats, avgSeconds: number, mode: TimedMode = "cut"): Stats {
   if (mode === "position") {
     const h = [...stats.timedPosHistory, { avg: avgSeconds, at: Date.now() }].slice(-TIMED_HISTORY_CAP);
-    return { ...stats, timedPosHistory: h, timedPosBest: bestOf(h), timedPosRuns: h.length, updatedAt: Date.now() };
+    return applyDailyStreak({
+      ...stats, timedPosHistory: h, timedPosBest: bestOf(h), timedPosRuns: h.length, updatedAt: Date.now(),
+    });
   }
   const h = [...stats.timedHistory, { avg: avgSeconds, at: Date.now() }].slice(-TIMED_HISTORY_CAP);
-  return { ...stats, timedHistory: h, timedBest: bestOf(h), timedRuns: h.length, updatedAt: Date.now() };
+  return applyDailyStreak({
+    ...stats, timedHistory: h, timedBest: bestOf(h), timedRuns: h.length, updatedAt: Date.now(),
+  });
 }
 
 // Discard the most recent timed run (e.g. you got distracted mid-run). Best
@@ -288,6 +365,12 @@ export function isLearned(stats: Stats, card: string): boolean {
 
 export function learnedCount(stats: Stats): number {
   return Object.values(stats.learn).filter((l) => l.introduced).length;
+}
+
+// How many learned cards are due for review today (Leitner due date passed).
+export function dueCount(stats: Stats): number {
+  const today = dateStr(new Date());
+  return Object.values(stats.learn).filter((l) => l.introduced && l.due <= today).length;
 }
 
 // A learned card counts as "weak" if it's in a low Leitner box, has missed

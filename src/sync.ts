@@ -72,6 +72,15 @@ export async function pushProgress(code: string, progress: ProgressMap): Promise
   if (!res.ok) throw new Error(`Upload failed (${res.status})`);
 }
 
+// Best-effort removal of an old row after a code rotation. Failure is fine —
+// the old row just goes stale.
+export async function deleteProgress(code: string): Promise<void> {
+  await fetch(`${SUPABASE_URL}/rest/v1/progress?id=eq.${encodeURIComponent(code)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+}
+
 export async function pullProgress(code: string): Promise<ProgressMap | null> {
   const url = `${SUPABASE_URL}/rest/v1/progress?id=eq.${encodeURIComponent(code)}&select=payload`;
   const res = await fetch(url, { headers: authHeaders() });

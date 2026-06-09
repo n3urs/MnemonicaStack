@@ -42,18 +42,103 @@ export const STACKS: StackDef[] = [
 export const DEFAULT_STACK_ID = "mnemonica";
 
 const ACTIVE_KEY = "mnemonica-trainer-active-stack";
+const CUSTOM_KEY = "mnemonica-trainer-custom-stacks";
+
+// ---- Custom stacks (user-created, stored locally) ----
+
+function isValidDef(d: unknown): d is StackDef {
+  const s = d as StackDef;
+  return (
+    !!s &&
+    typeof s.id === "string" &&
+    typeof s.name === "string" &&
+    Array.isArray(s.cards) &&
+    s.cards.length === 52 &&
+    s.cards.every((c) => typeof c === "string" && c.length === 2)
+  );
+}
+
+export function getCustomStacks(): StackDef[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as unknown[];
+    return Array.isArray(list) ? list.filter(isValidDef) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomStack(def: StackDef): void {
+  const list = getCustomStacks().filter((s) => s.id !== def.id);
+  list.push(def);
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function deleteCustomStack(id: string): void {
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(getCustomStacks().filter((s) => s.id !== id)));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isCustomStack(id: string): boolean {
+  return getCustomStacks().some((s) => s.id === id);
+}
+
+// Parse a pasted card list into stack order. Accepts "4C", "10c", "TD", and
+// suit symbols ("4♣"), separated by spaces / commas / newlines. Returns the
+// parsed cards plus human-readable problems (bad tokens, dupes, missing).
+export function parseStackCards(text: string): { cards: string[]; errors: string[] } {
+  const SUIT_MAP: Record<string, string> = { S: "S", H: "H", D: "D", C: "C", "♠": "S", "♥": "H", "♦": "D", "♣": "C" };
+  const tokens = text.trim().split(/[\s,;]+/).filter(Boolean);
+  const cards: string[] = [];
+  const errors: string[] = [];
+  for (const tok of tokens) {
+    const t = tok.toUpperCase().replace(/^10/, "T");
+    const rank = t.slice(0, -1);
+    const suit = SUIT_MAP[t.slice(-1)];
+    if (!suit || !"A23456789TJQK".includes(rank) || rank.length !== 1) {
+      errors.push(`can't read "${tok}"`);
+      continue;
+    }
+    cards.push(rank + suit);
+  }
+  const seen = new Set<string>();
+  for (const c of cards) {
+    if (seen.has(c)) errors.push(`duplicate ${c}`);
+    seen.add(c);
+  }
+  if (errors.length === 0 && cards.length !== 52) {
+    errors.push(`${cards.length} of 52 cards`);
+  }
+  return { cards, errors };
+}
+
+// ---- Registry (built-in + custom) ----
+
+export function allStacks(): StackDef[] {
+  return [...STACKS, ...getCustomStacks()];
+}
 
 export function allStackIds(): string[] {
-  return STACKS.map((s) => s.id);
+  return allStacks().map((s) => s.id);
 }
 
 export function getStackDef(id: string): StackDef {
-  return STACKS.find((s) => s.id === id) ?? STACKS[0];
+  return allStacks().find((s) => s.id === id) ?? STACKS[0];
 }
 
 export function getActiveStackId(): string {
   try {
-    return localStorage.getItem(ACTIVE_KEY) || DEFAULT_STACK_ID;
+    const id = localStorage.getItem(ACTIVE_KEY) || DEFAULT_STACK_ID;
+    // Guard against a deleted custom stack lingering as "active".
+    return allStacks().some((s) => s.id === id) ? id : DEFAULT_STACK_ID;
   } catch {
     return DEFAULT_STACK_ID;
   }
