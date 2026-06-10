@@ -1,4 +1,4 @@
-# Mnemonica Trainer
+# StackDrill
 
 A local, browser-based flashcard app for memorising the **Mnemonica** stack — the 52-card
 memorised deck order used in card magic. Four drill modes, weighted card selection that

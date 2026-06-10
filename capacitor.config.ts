@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.oscarsullivan.mnemonica',
-  appName: 'Mnemonica Trainer',
+  appName: 'StackDrill',
   webDir: 'dist'
 };
 

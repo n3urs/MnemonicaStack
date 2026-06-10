@@ -42,7 +42,7 @@ export function Home({
   return (
     <div className="screen home">
       <header className="home-header">
-        <h1 className="title">Mnemonica Trainer</h1>
+        <h1 className="title">StackDrill</h1>
         <p className="subtitle">
           <em>A daily drill for the memorised deck.</em>
         </p>
