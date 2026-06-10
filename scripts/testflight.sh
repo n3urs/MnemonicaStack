@@ -154,7 +154,6 @@ else
     -archivePath "$ARCHIVE" \
     -exportPath "$EXPORT_DIR" \
     -exportOptionsPlist "$EXPORT_PLIST" \
-    -allowProvisioningUpdates \
     "${AUTH_FLAGS[@]}"
 
   # Rename IPA to StackDrill.ipa if Xcode used a different name
