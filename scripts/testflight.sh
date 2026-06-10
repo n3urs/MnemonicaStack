@@ -55,20 +55,11 @@ xcodebuild archive \
   -configuration Release \
   -archivePath "$ARCHIVE" \
   -destination "generic/platform=iOS" \
-  CODE_SIGN_STYLE=Automatic \
-  | xcpretty 2>/dev/null || true
-
-# xcpretty is optional; fall back to raw output if missing
-if [[ ! -d "$ARCHIVE" ]]; then
-  echo "(retrying without xcpretty)"
-  xcodebuild archive \
-    -project "$PROJECT" \
-    -scheme "$SCHEME" \
-    -configuration Release \
-    -archivePath "$ARCHIVE" \
-    -destination "generic/platform=iOS" \
-    CODE_SIGN_STYLE=Automatic
-fi
+  -allowProvisioningUpdates \
+  -authenticationKeyID "$ASC_API_KEY_ID" \
+  -authenticationKeyIssuerID "$ASC_API_KEY_ISSUER" \
+  -authenticationKeyPath "$ASC_API_KEY_PATH" \
+  CODE_SIGN_STYLE=Automatic
 
 echo "Archive: $ARCHIVE"
 
@@ -160,6 +151,7 @@ else
     -archivePath "$ARCHIVE" \
     -exportPath "$EXPORT_DIR" \
     -exportOptionsPlist "$EXPORT_PLIST" \
+    -allowProvisioningUpdates \
     "${AUTH_FLAGS[@]}"
 
   # Rename IPA to StackDrill.ipa if Xcode used a different name
