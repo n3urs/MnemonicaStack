@@ -19,12 +19,13 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT="$PROJECT_DIR/ios/App/App.xcodeproj"
+XCODE_PROJECT_DIR="$PROJECT_DIR/ios/App"
+PROJECT="$XCODE_PROJECT_DIR/App.xcodeproj"
 SCHEME="App"
-BUNDLE_ID="com.oscarsullivan.mnemonica"
 ARCHIVE="$PROJECT_DIR/build/StackDrill.xcarchive"
 EXPORT_DIR="$PROJECT_DIR/build/export"
 EXPORT_PLIST="$PROJECT_DIR/build/ExportOptions.plist"
+IPA="$EXPORT_DIR/StackDrill.ipa"
 
 SKIP_WEB=false
 for arg in "$@"; do
@@ -36,7 +37,19 @@ if [[ -f "$PROJECT_DIR/.env" ]]; then
   set -a; source "$PROJECT_DIR/.env"; set +a
 fi
 
-mkdir -p "$PROJECT_DIR/build"
+# ── Auth ───────────────────────────────────────────────────────────────────
+if [[ -n "${ASC_API_KEY_ID:-}" && -n "${ASC_API_KEY_ISSUER:-}" && -n "${ASC_API_KEY_PATH:-}" ]]; then
+  USE_API_KEY=true
+elif [[ -n "${APPLE_ID:-}" && -n "${APP_SPECIFIC_PASSWORD:-}" ]]; then
+  USE_API_KEY=false
+else
+  echo "ERROR: no auth credentials found."
+  echo "Set ASC_API_KEY_ID / ASC_API_KEY_ISSUER / ASC_API_KEY_PATH  (API key)"
+  echo "  or  APPLE_ID / APP_SPECIFIC_PASSWORD  (Apple ID)"
+  exit 1
+fi
+
+mkdir -p "$PROJECT_DIR/build" "$EXPORT_DIR"
 
 # ── 1. Web build + iOS sync ────────────────────────────────────────────────
 if [[ "$SKIP_WEB" == false ]]; then
@@ -47,24 +60,37 @@ if [[ "$SKIP_WEB" == false ]]; then
   node "$PROJECT_DIR/scripts/ios-sync.mjs"
 fi
 
-# ── 2. Archive ─────────────────────────────────────────────────────────────
-echo "==> xcodebuild archive"
-xcodebuild archive \
-  -project "$PROJECT" \
-  -scheme "$SCHEME" \
-  -configuration Release \
-  -archivePath "$ARCHIVE" \
-  -destination "generic/platform=iOS" \
-  -allowProvisioningUpdates \
-  -authenticationKeyID "$ASC_API_KEY_ID" \
-  -authenticationKeyIssuerID "$ASC_API_KEY_ISSUER" \
-  -authenticationKeyPath "$ASC_API_KEY_PATH" \
-  CODE_SIGN_STYLE=Automatic \
-  DEVELOPMENT_TEAM=87F48SV42Q
+# ── 2. Auto-increment build number ────────────────────────────────────────
+cd "$XCODE_PROJECT_DIR"
+CURRENT_BUILD=$(agvtool what-version -terse)
+NEW_BUILD=$((CURRENT_BUILD + 1))
+echo "==> build number: $CURRENT_BUILD → $NEW_BUILD"
+agvtool new-version -all "$NEW_BUILD"
+cd "$PROJECT_DIR"
 
+# ── 3. Archive ─────────────────────────────────────────────────────────────
+echo "==> xcodebuild archive"
+ARCHIVE_FLAGS=(
+  -project "$PROJECT"
+  -scheme "$SCHEME"
+  -configuration Release
+  -archivePath "$ARCHIVE"
+  -destination "generic/platform=iOS"
+  -allowProvisioningUpdates
+  CODE_SIGN_STYLE=Automatic
+  DEVELOPMENT_TEAM=87F48SV42Q
+)
+if [[ "$USE_API_KEY" == true ]]; then
+  ARCHIVE_FLAGS+=(
+    -authenticationKeyID "$ASC_API_KEY_ID"
+    -authenticationKeyIssuerID "$ASC_API_KEY_ISSUER"
+    -authenticationKeyPath "$ASC_API_KEY_PATH"
+  )
+fi
+xcodebuild archive "${ARCHIVE_FLAGS[@]}"
 echo "Archive: $ARCHIVE"
 
-# ── 3. Export IPA ──────────────────────────────────────────────────────────
+# ── 4. Export IPA ──────────────────────────────────────────────────────────
 cat > "$EXPORT_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -73,7 +99,7 @@ cat > "$EXPORT_PLIST" <<PLIST
   <key>method</key>
   <string>app-store-connect</string>
   <key>destination</key>
-  <string>upload</string>
+  <string>export</string>
   <key>signingStyle</key>
   <string>automatic</string>
   <key>teamID</key>
@@ -86,84 +112,46 @@ cat > "$EXPORT_PLIST" <<PLIST
 </plist>
 PLIST
 
-echo "==> xcodebuild -exportArchive (upload to App Store Connect)"
-
-# Build the auth flags
-AUTH_FLAGS=()
-if [[ -n "${ASC_API_KEY_ID:-}" && -n "${ASC_API_KEY_ISSUER:-}" && -n "${ASC_API_KEY_PATH:-}" ]]; then
-  echo "    using API key auth (key $ASC_API_KEY_ID)"
-  AUTH_FLAGS=(
+EXPORT_FLAGS=(
+  -exportArchive
+  -archivePath "$ARCHIVE"
+  -exportPath "$EXPORT_DIR"
+  -exportOptionsPlist "$EXPORT_PLIST"
+  -allowProvisioningUpdates
+)
+if [[ "$USE_API_KEY" == true ]]; then
+  EXPORT_FLAGS+=(
     -authenticationKeyID "$ASC_API_KEY_ID"
     -authenticationKeyIssuerID "$ASC_API_KEY_ISSUER"
     -authenticationKeyPath "$ASC_API_KEY_PATH"
   )
-elif [[ -n "${APPLE_ID:-}" && -n "${APP_SPECIFIC_PASSWORD:-}" ]]; then
-  echo "    using Apple ID auth ($APPLE_ID)"
-  # altool-style creds go via xcrun after export; export without upload here,
-  # then upload separately below.
-  AUTH_FLAGS=()
-  UPLOAD_VIA_ALTOOL=true
-else
-  echo "ERROR: no auth credentials found."
-  echo "Set ASC_API_KEY_ID / ASC_API_KEY_ISSUER / ASC_API_KEY_PATH  (API key)"
-  echo "  or  APPLE_ID / APP_SPECIFIC_PASSWORD  (Apple ID)"
-  exit 1
 fi
+echo "==> xcodebuild -exportArchive"
+xcodebuild "${EXPORT_FLAGS[@]}"
 
-if [[ "${UPLOAD_VIA_ALTOOL:-false}" == true ]]; then
-  # Export to disk, then upload via altool
-  cat > "$EXPORT_PLIST" <<PLIST2
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>method</key>
-  <string>app-store-connect</string>
-  <key>destination</key>
-  <string>export</string>
-  <key>signingStyle</key>
-  <string>automatic</string>
-  <key>stripSwiftSymbols</key>
-  <true/>
-  <key>uploadSymbols</key>
-  <true/>
-</dict>
-</plist>
-PLIST2
+# Rename to StackDrill.ipa
+EXPORTED=$(find "$EXPORT_DIR" -name "*.ipa" | head -1)
+if [[ "$EXPORTED" != "$IPA" ]]; then
+  mv "$EXPORTED" "$IPA"
+fi
+echo "IPA: $IPA"
 
-  xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE" \
-    -exportPath "$EXPORT_DIR" \
-    -exportOptionsPlist "$EXPORT_PLIST"
-
-  IPA=$(find "$EXPORT_DIR" -name "*.ipa" | head -1)
-  # Rename to StackDrill.ipa regardless of what Xcode named it
-  if [[ "$(basename "$IPA")" != "StackDrill.ipa" ]]; then
-    mv "$IPA" "$(dirname "$IPA")/StackDrill.ipa"
-    IPA="$(dirname "$IPA")/StackDrill.ipa"
-  fi
-  echo "==> uploading via altool: $IPA"
+# ── 5. Upload to TestFlight ────────────────────────────────────────────────
+echo "==> uploading to App Store Connect (build $NEW_BUILD)"
+if [[ "$USE_API_KEY" == true ]]; then
+  xcrun altool --upload-app \
+    --type ios \
+    --file "$IPA" \
+    --apiKey "$ASC_API_KEY_ID" \
+    --apiIssuer "$ASC_API_KEY_ISSUER"
+else
   xcrun altool --upload-app \
     --type ios \
     --file "$IPA" \
     --username "$APPLE_ID" \
     --password "$APP_SPECIFIC_PASSWORD"
-else
-  # API key: xcodebuild can upload directly
-  xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE" \
-    -exportPath "$EXPORT_DIR" \
-    -exportOptionsPlist "$EXPORT_PLIST" \
-    -allowProvisioningUpdates \
-    "${AUTH_FLAGS[@]}"
-
-  # Rename IPA to StackDrill.ipa if Xcode used a different name
-  IPA=$(find "$EXPORT_DIR" -name "*.ipa" | head -1)
-  if [[ -n "$IPA" && "$(basename "$IPA")" != "StackDrill.ipa" ]]; then
-    mv "$IPA" "$(dirname "$IPA")/StackDrill.ipa"
-  fi
 fi
 
 echo ""
-echo "Done. Build submitted to TestFlight."
+echo "Done. Build $NEW_BUILD submitted to TestFlight."
 echo "Check App Store Connect -> TestFlight for processing status."
