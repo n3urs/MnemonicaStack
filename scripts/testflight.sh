@@ -59,7 +59,8 @@ xcodebuild archive \
   -authenticationKeyID "$ASC_API_KEY_ID" \
   -authenticationKeyIssuerID "$ASC_API_KEY_ISSUER" \
   -authenticationKeyPath "$ASC_API_KEY_PATH" \
-  CODE_SIGN_STYLE=Automatic
+  CODE_SIGN_STYLE=Automatic \
+  DEVELOPMENT_TEAM=87F48SV42Q
 
 echo "Archive: $ARCHIVE"
 
@@ -75,6 +76,8 @@ cat > "$EXPORT_PLIST" <<PLIST
   <string>upload</string>
   <key>signingStyle</key>
   <string>automatic</string>
+  <key>teamID</key>
+  <string>87F48SV42Q</string>
   <key>stripSwiftSymbols</key>
   <true/>
   <key>uploadSymbols</key>
