@@ -14,6 +14,7 @@ ios/App/App.xcodeproj/xcuserdata/
 ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
 ios/App/CapApp-SPM/.swiftpm/
 DerivedData/
+build/
 *.xcuserstate
 
 # Editor noise
