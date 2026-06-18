@@ -23,6 +23,10 @@ html,
 body,
 #root {
   height: 100%;
+  /* Never let a stray-wide element widen the layout viewport. On iOS that
+     widening is what drags `position: fixed; right: 0` elements (the sound-key
+     tab) off the right edge of the screen — anchor stays on-screen now. */
+  overflow-x: hidden;
 }
 
 body {
@@ -1558,14 +1562,16 @@ button {
 /* ---------- Sound key (global hint) ---------- */
 .soundkey-tab {
   position: fixed;
-  right: 0;
+  /* Sit inside the device safe area so the rounded screen corner / edge can
+     never clip the tab. */
+  right: env(safe-area-inset-right, 0px);
   top: 40%;
   z-index: 60;
-  padding: 12px 7px;
+  padding: 14px 9px;
   border: 1px solid var(--gold);
   border-right: none;
-  border-radius: 9px 0 0 9px;
-  background: linear-gradient(180deg, rgba(212, 184, 120, 0.18), rgba(20, 16, 9, 0.92));
+  border-radius: 10px 0 0 10px;
+  background: linear-gradient(180deg, rgba(212, 184, 120, 0.22), rgba(20, 16, 9, 0.94));
   color: var(--gold-bright);
   cursor: pointer;
   box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.5);
@@ -1575,15 +1581,15 @@ button {
 }
 
 .soundkey-tab:hover {
-  padding-right: 11px;
-  background: linear-gradient(180deg, rgba(212, 184, 120, 0.28), rgba(20, 16, 9, 0.92));
+  padding-right: 13px;
+  background: linear-gradient(180deg, rgba(212, 184, 120, 0.3), rgba(20, 16, 9, 0.94));
 }
 
 .soundkey-tab-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 1.5px;
 }
 

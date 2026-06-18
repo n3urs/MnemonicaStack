@@ -139,6 +139,15 @@ echo "IPA: $IPA"
 # ── 5. Upload to TestFlight ────────────────────────────────────────────────
 echo "==> uploading to App Store Connect (build $NEW_BUILD)"
 if [[ "$USE_API_KEY" == true ]]; then
+  # altool looks up the key by name (AuthKey_<ID>.p8) in fixed dirs.
+  # Symlink the actual file so it resolves regardless of what the file is named.
+  ALTOOL_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+  ALTOOL_KEY_LINK="$ALTOOL_KEY_DIR/AuthKey_${ASC_API_KEY_ID}.p8"
+  mkdir -p "$ALTOOL_KEY_DIR"
+  if [[ ! -e "$ALTOOL_KEY_LINK" ]]; then
+    ln -s "$ASC_API_KEY_PATH" "$ALTOOL_KEY_LINK"
+  fi
+
   xcrun altool --upload-app \
     --type ios \
     --file "$IPA" \

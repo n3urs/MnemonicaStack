@@ -8,6 +8,12 @@
       "port": 5173
     },
     {
+      "name": "cfr-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4317", "--directory", "/Users/oscarsullivan/Documents/Code/cfr-revamp"],
+      "port": 4317
+    },
+    {
       "name": "prod",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "preview", "--port", "4173", "--strictPort"],
