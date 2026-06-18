@@ -1563,9 +1563,10 @@ button {
 .soundkey-tab {
   position: fixed;
   /* Sit inside the device safe area so the rounded screen corner / edge can
-     never clip the tab. */
+     never clip the tab, and down in the bottom-right corner where there's
+     usually less content to sit on top of. */
   right: env(safe-area-inset-right, 0px);
-  top: 40%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
   z-index: 60;
   padding: 14px 9px;
   border: 1px solid var(--gold);
