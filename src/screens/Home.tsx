@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { dueCount, learnedCount, type Stats, type TimedMode } from "../storage";
+import { learnedCount, type Stats, type TimedMode } from "../storage";
 import { type Mode } from "../quiz";
 import { MetricBox } from "../components/MetricBox";
 import { Ornament } from "../components/Ornament";
@@ -38,7 +38,6 @@ export function Home({
   const accuracy =
     stats.totalAnswered === 0 ? "—" : `${Math.round((stats.totalCorrect / stats.totalAnswered) * 100)}%`;
   const learned = learnedCount(stats);
-  const due = dueCount(stats);
   const bestPerCard = stats.timedBest === null ? "—" : `${stats.timedBest.toFixed(1)}s`;
 
   return (
@@ -76,13 +75,6 @@ export function Home({
           <span style={{ width: `${(learned / 52) * 100}%` }} />
         </span>
       </button>
-
-      {due > 0 && (
-        <button type="button" className="due-banner" onClick={() => onStart("cardToPosition")}>
-          <span className="due-count">{due}</span> card{due === 1 ? "" : "s"} due for review today —
-          drill them →
-        </button>
-      )}
 
       <p className="eyebrow">Drills</p>
       <div className="mode-list">
