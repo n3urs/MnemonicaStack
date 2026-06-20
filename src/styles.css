@@ -1769,6 +1769,20 @@ button {
   color: var(--text);
 }
 
+.random-card-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
+  text-align: center;
+  pointer-events: none;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

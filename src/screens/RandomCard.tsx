@@ -36,6 +36,7 @@ export function RandomCard({ onBack }: { onBack: () => void }) {
         ← Back
       </button>
       <PlayingCard card={card} size="large" />
+      <span className="random-card-hint">press anywhere to cycle</span>
     </div>
   );
 }
