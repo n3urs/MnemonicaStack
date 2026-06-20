@@ -86,7 +86,7 @@ export function Home({
       <div className="mode-list">
         <button type="button" className="mode-button" onClick={() => setPosChooser(true)}>
           <span className="mode-name">Positions</span>
-          <span className="mode-desc">Card ↔ position — pick which way after you tap.</span>
+          <span className="mode-desc">Card ↔ position — pick which way, or go hands-free, after you tap.</span>
         </button>
         <button type="button" className="mode-button" onClick={() => onStart("neighbour")}>
           <span className="mode-name">Next or before</span>
@@ -103,10 +103,6 @@ export function Home({
         <button type="button" className="mode-button" onClick={onAcaan}>
           <span className="mode-name">ACAAN cut</span>
           <span className="mode-desc">Work out the cut so a named card deals to any number.</span>
-        </button>
-        <button type="button" className="mode-button" onClick={onAudio}>
-          <span className="mode-name">Hands-free audio</span>
-          <span className="mode-desc">It speaks a card, you think, it speaks the answer — looped.</span>
         </button>
       </div>
 
@@ -142,6 +138,9 @@ export function Home({
             </button>
             <button type="button" className="filter-option" onClick={() => onStart("positionToCard")}>
               Position → card
+            </button>
+            <button type="button" className="filter-option" onClick={onAudio}>
+              Hands-free audio · spoken &amp; looped
             </button>
             <button type="button" className="btn btn-ghost filter-close" onClick={() => setPosChooser(false)}>
               Close
