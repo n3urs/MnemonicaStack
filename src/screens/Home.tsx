@@ -17,6 +17,7 @@ export function Home({
   onToolkit,
   onTimed,
   onAudio,
+  onRandom,
 }: {
   stats: Stats;
   onLearn: () => void;
@@ -30,6 +31,7 @@ export function Home({
   onToolkit: () => void;
   onTimed: (mode: TimedMode) => void;
   onAudio: () => void;
+  onRandom: () => void;
 }) {
   const [posChooser, setPosChooser] = useState(false);
   const [timedChooser, setTimedChooser] = useState(false);
@@ -111,6 +113,9 @@ export function Home({
       <div className="secondary-actions">
         <button type="button" className="btn btn-ghost" onClick={onReference}>
           See the full stack
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={onRandom}>
+          Random card
         </button>
         <button type="button" className="btn btn-ghost" onClick={onToolkit}>
           Performance toolkit

@@ -40,6 +40,7 @@ import { Timed } from "./screens/Timed";
 import { Acaan } from "./screens/Acaan";
 import { AudioDrill } from "./screens/AudioDrill";
 import { StackEditor } from "./screens/StackEditor";
+import { RandomCard } from "./screens/RandomCard";
 import { SoundKey } from "./components/SoundKey";
 
 type Screen =
@@ -55,7 +56,8 @@ type Screen =
   | { name: "toolkit" }
   | { name: "timed"; mode: TimedMode }
   | { name: "acaan" }
-  | { name: "audio" };
+  | { name: "audio" }
+  | { name: "random" };
 
 export type SyncStatus = { busy: boolean; message: string };
 
@@ -292,6 +294,7 @@ export default function App() {
           onToolkit={() => setScreen({ name: "toolkit" })}
           onTimed={(mode) => setScreen({ name: "timed", mode })}
           onAudio={() => setScreen({ name: "audio" })}
+          onRandom={() => setScreen({ name: "random" })}
         />
       )}
       {screen.name === "learn" && (
@@ -347,6 +350,7 @@ export default function App() {
         />
       )}
       {screen.name === "toolkit" && <Toolkit onBack={goHome} />}
+      {screen.name === "random" && <RandomCard onBack={goHome} />}
       {screen.name === "timed" && (
         <Timed
           mode={screen.mode}
@@ -358,8 +362,9 @@ export default function App() {
         />
       )}
       {/* The sound-key hint is about the Major-system letters — not relevant
-          on the timed screen, where it would also overlap the speed chart. */}
-      {screen.name !== "timed" && <SoundKey />}
+          on the timed screen (overlaps the speed chart) nor the bare
+          random-card flasher, which is meant to be nothing but the card. */}
+      {screen.name !== "timed" && screen.name !== "random" && <SoundKey />}
     </div>
   );
 }

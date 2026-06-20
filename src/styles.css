@@ -1728,6 +1728,47 @@ button {
   color: var(--text-dim);
 }
 
+/* Random-card flasher: nothing but a big card on a bare surface. Covers the
+   whole viewport (and the app padding) so it's edge-to-edge; tapping anywhere
+   cuts to the next card. */
+.random-card {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 50% 38%, var(--bg-warm) 0%, var(--bg) 62%);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.random-card .playing-card {
+  /* Fill the screen while keeping the 5:7 ratio — capped by whichever of width
+     or height is the tighter constraint. */
+  width: min(82vw, calc((100dvh - 96px) * 5 / 7));
+}
+
+.random-card-back {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  z-index: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.random-card-back:hover {
+  color: var(--text);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
