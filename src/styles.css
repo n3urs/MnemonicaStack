@@ -1776,11 +1776,11 @@ button {
   bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
   text-align: center;
   pointer-events: none;
-  color: var(--text-dim);
+  color: var(--gold-bright);
   font-family: var(--mono);
   font-size: 12px;
   letter-spacing: 1px;
-  opacity: 0.55;
+  opacity: 0.85;
 }
 
 @media (prefers-reduced-motion: reduce) {
