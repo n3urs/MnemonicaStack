@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StackDrill — Privacy Policy</title>
+    <style>
+      :root {
+        --bg: #0a0807;
+        --bg-warm: #17110b;
+        --text: #e8dcc4;
+        --dim: #9a8f78;
+        --gold: #d4b878;
+        --line: rgba(184, 153, 104, 0.25);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg) radial-gradient(circle at 50% 20%, var(--bg-warm), var(--bg) 60%) fixed;
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+      }
+      main { max-width: 720px; margin: 0 auto; padding: 48px 22px 80px; }
+      h1 { font-size: 30px; margin: 0 0 4px; color: var(--gold); }
+      h2 { font-size: 19px; margin: 34px 0 8px; color: var(--gold); }
+      .updated { color: var(--dim); font-size: 14px; margin-bottom: 8px; }
+      p, li { color: var(--text); }
+      a { color: var(--gold); }
+      hr { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+      code { background: rgba(184,153,104,0.12); padding: 1px 5px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Privacy Policy</h1>
+      <p class="updated">StackDrill · Last updated 1 July 2026</p>
+      <p>
+        StackDrill is a flashcard trainer for memorised card stacks. This policy explains what
+        data the app handles. In short: the app has no user accounts, shows no ads, and includes
+        no analytics or tracking.
+      </p>
+
+      <h2>Data stored on your device</h2>
+      <p>
+        By default, everything StackDrill records — your learning progress, drill statistics,
+        custom stacks, and any pegs or notes you write — is stored locally on your device only.
+        It never leaves your device unless you choose to enable Sync (below). Deleting the app
+        removes this data.
+      </p>
+
+      <h2>Optional cloud sync</h2>
+      <p>
+        StackDrill offers an optional Sync feature so you can carry your progress between your own
+        devices. Sync is off unless you turn it on. When you enable it, the app generates a random,
+        anonymous <em>sync code</em> and stores a copy of your progress data (the same statistics,
+        stacks, pegs, and notes described above) in a hosted database provided by Supabase, keyed to
+        that code.
+      </p>
+      <ul>
+        <li>No name, email address, account, or other identifying information is collected or required.</li>
+        <li>
+          The sync code is the only key to your data. Anyone who has your code can read the synced
+          progress, so treat it like a password and don't share it.
+        </li>
+        <li>
+          You can rotate your code or turn Sync off at any time from the app's Settings. Turning Sync
+          off stops further uploads; you can also change your code, which retires the old one.
+        </li>
+      </ul>
+
+      <h2>What is <strong>not</strong> collected</h2>
+      <p>
+        StackDrill contains no advertising, no third-party analytics or tracking SDKs, and does not
+        collect your location, contacts, device identifiers, or any personal information.
+      </p>
+
+      <h2>Children's privacy</h2>
+      <p>
+        StackDrill does not knowingly collect any personal information from anyone, including children.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        If this policy changes, the updated version will be posted at this URL with a revised date.
+      </p>
+
+      <hr />
+      <h2>Contact</h2>
+      <p>
+        Questions about privacy? Email
+        <a href="mailto:oscar@sullivanltd.co.uk">oscar@sullivanltd.co.uk</a>.
+      </p>
+    </main>
+  </body>
+</html>
